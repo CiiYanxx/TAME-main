@@ -49,6 +49,7 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         anim = GetComponent<Animator>();
+        Application.targetFrameRate = 60;
         if (playerCamera == null) playerCamera = Camera.main;
         
         if (playerCamera != null && cameraOrbitTarget != null)

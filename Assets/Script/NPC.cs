@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TMPro;
-using UnityEngine.SceneManagement; // Importante ito para sa LoadScene
+using UnityEngine.SceneManagement; 
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +17,11 @@ public class NPC : MonoBehaviour
     public int totalCompletedMissions = 0; 
     public bool playerInRange, isTalkingWithPlayer;
     
-    // --- SETTINGS PARA SA DISTANCE CHECK ---
     [Header("Distance Settings")]
     public float interactionDistance = 3.5f; 
+    // OPTIMIZATION: Check interval para iwas lag
+    private float nextCheckTime;
+    private float checkInterval = 0.2f; 
 
     private int introStep = 0;
     private string coloredPlayerName = "Player";
@@ -39,13 +41,11 @@ public class NPC : MonoBehaviour
 
         coloredPlayerName = $"<color=#00FFFF>{savedName}</color>";
 
-        // --- DAGDAG: LOAD SAVED DATA ---
         GameData data = SaveSystem.Load();
         if (data != null)
         {
             totalCompletedMissions = data.completedMissions;
 
-            // I-check kung may active mission na hindi natapos
             if (PlayerPrefs.GetInt("IsMissionActive", 0) == 1)
             {
                 int locIdx = PlayerPrefs.GetInt("ActiveLocIdx", -1);
@@ -57,7 +57,6 @@ public class NPC : MonoBehaviour
                     Quest q = quests.Find(quest => quest.info == activeInfo);
                     if (q != null) q.accepted = true;
 
-                    // I-trigger ang mission (Pwede mo lagyan ng maikling delay kung kailangan)
                     if (RescueController.Instance != null)
                         RescueController.Instance.StartMission(this, activeInfo);
                 }
@@ -65,10 +64,8 @@ public class NPC : MonoBehaviour
         }
     }
 
-    // --- DAGDAG: FUNCTION PARA SA RESUME BUTTON (Tatawagin mo sa Main Menu) ---
     public void ResumeWithLoading(string loadingSceneName)
     {
-        // I-save ang current state bago lumipat ng scene
         PlayerPrefs.Save(); 
         SceneManager.LoadScene(loadingSceneName);
     }
@@ -94,10 +91,7 @@ public class NPC : MonoBehaviour
                 active.accepted = false; 
             }
 
-            // --- DAGDAG: MISSION ENDED, I-SAVE ANG STATUS ---
             PlayerPrefs.SetInt("IsMissionActive", 0);
-            
-            // I-save ang progress sa JSON
             SaveProgress();
         }
     }
@@ -108,34 +102,40 @@ public class NPC : MonoBehaviour
                         .Replace("<color=#00FFFF>", "").Replace("</color>", "");
         
         Vector3 pos = PlayerMovement.Instance != null ? PlayerMovement.Instance.transform.position : Vector3.zero;
-
-        // --- ETO ANG FIX: Palitan ang GetCurrentPoints() ng currentPoints ---
         int points = RescuePointsHandler.Instance != null ? RescuePointsHandler.Instance.currentPoints : 0;
         
-        // Siguraduhin na 5 arguments ito: missions, points, pos, name, customization
         SaveSystem.Save(totalCompletedMissions, points, pos, rawName, "");
         PlayerPrefs.Save();
     }
 
     void Update()
     {
-        // --- ITO ANG DISTANCE CHECK LOGIC ---
-        if (PlayerMovement.Instance != null)
+        // OPTIMIZATION: Imbes na bawat frame, i-check lang distansya bawat 0.2 seconds
+        if (Time.time >= nextCheckTime)
         {
-            float dist = Vector3.Distance(transform.position, PlayerMovement.Instance.transform.position);
-            
-            if (dist <= interactionDistance)
+            nextCheckTime = Time.time + checkInterval;
+            CheckInteractionDistance();
+        }
+    }
+
+    private void CheckInteractionDistance()
+    {
+        if (PlayerMovement.Instance == null) return;
+
+        // Gamit ang sqrMagnitude (mas mabilis kaysa Vector3.Distance)
+        float sqrDist = (transform.position - PlayerMovement.Instance.transform.position).sqrMagnitude;
+        float sqrLimit = interactionDistance * interactionDistance;
+        
+        if (sqrDist <= sqrLimit)
+        {
+            playerInRange = true;
+        }
+        else
+        {
+            if (playerInRange)
             {
-                playerInRange = true;
-            }
-            else
-            {
-                // Kung dati siyang in range pero lumayo na
-                if (playerInRange)
-                {
-                    playerInRange = false;
-                    if (isTalkingWithPlayer) EndConversation();
-                }
+                playerInRange = false;
+                if (isTalkingWithPlayer) EndConversation();
             }
         }
     }
@@ -218,7 +218,6 @@ public class NPC : MonoBehaviour
         Quest q = quests.Find(quest => quest.info == info);
         if (q != null) q.accepted = true;
 
-        // --- DAGDAG: I-SAVE NA ACTIVE NA ANG MISSION ---
         PlayerPrefs.SetInt("IsMissionActive", 1);
         PlayerPrefs.SetInt("ActiveLocIdx", info.locationIndex);
         PlayerPrefs.SetInt("ActiveMissIdx", info.missionIndex);
@@ -288,8 +287,4 @@ public class NPC : MonoBehaviour
 
         DialogSystem.Instance.CloseAllPanels();
     }
-
-    // Pwede mo itong i-delete kung wala ka nang collider sa NPC, pero okay lang din iwan para backup
-    private void OnTriggerEnter(Collider other) { if (other.CompareTag("Player")) playerInRange = true; }
-    private void OnTriggerExit(Collider other) { if (other.CompareTag("Player")) { playerInRange = false; EndConversation(); } }
 }

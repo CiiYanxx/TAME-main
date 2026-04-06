@@ -10,6 +10,10 @@ public class AnimalMissionLogic : MonoBehaviour
     [Header("Mission Status")]
     public MissionStep currentStep = MissionStep.ClearDebris;
 
+    [Header("Distance Settings")]
+    [Tooltip("Gaano kalayo hihinto ang hayop sa pagkain. Taasan ito kung masyadong malapit.")]
+    public float stopDistance = 1.2f; 
+
     [Header("UI Buttons (Assigned by RescueController)")]
     public Button cleanButton; 
     public Button feedButton;
@@ -143,14 +147,26 @@ public class AnimalMissionLogic : MonoBehaviour
     IEnumerator AnimalWalkToFood(Vector3 targetPos)
     {
         if (animalMover == null) yield break;
+        
         Vector3 stopPos = targetPos; 
         stopPos.y = transform.position.y;
-        while (Vector3.Distance(transform.position, stopPos) > 1.0f)
+
+        // ACCURACY FIX: Habang papalapit, dahan-dahang babagal (Lerp speed)
+        float currentDistance = Vector3.Distance(transform.position, stopPos);
+
+        while (currentDistance > stopDistance)
         {
-            animalMover.SetInput(new Vector2(0, 1), stopPos, false, false);
+            currentDistance = Vector3.Distance(transform.position, stopPos);
+            
+            // Speed smoothing para iwas jitter
+            float speedScale = Mathf.Clamp01((currentDistance - (stopDistance * 0.5f)) / stopDistance);
+            animalMover.SetInput(new Vector2(0, 1 * speedScale), stopPos, false, false);
+            
             yield return null;
         }
-        animalMover.SetInput(Vector2.zero, stopPos, false, false);
+
+        // Forced stop
+        animalMover.SetInput(Vector2.zero, transform.position + transform.forward, false, false);
         yield return new WaitForSeconds(2.5f); 
     }
 }

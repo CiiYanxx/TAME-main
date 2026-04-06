@@ -304,11 +304,20 @@ namespace ithappy.Animals_FREE
 
             public void Animate(in Vector2 axis, float state, float deltaTime)
             {
+                // Kung ang axis ay zero (hinto), pilitin nating mag-zero agad ang animation
+                if (axis.sqrMagnitude < 0.01f)
+                {
+                    m_FlowAxis = Vector2.zero;
+                }
+                else
+                {
+                    m_FlowAxis = Vector2.MoveTowards(m_FlowAxis, axis, k_InputFlow * deltaTime);
+                }
+                
                 m_Animator.SetFloat(m_VerticalID, m_FlowAxis.magnitude);
                 m_Animator.SetFloat(m_StateID, Mathf.Clamp01(m_FlowState));
-
-                m_FlowAxis = Vector2.ClampMagnitude(m_FlowAxis + k_InputFlow * deltaTime * (axis - m_FlowAxis).normalized, 1f);
-                m_FlowState = Mathf.Clamp01(m_FlowState + k_InputFlow * deltaTime * Mathf.Sign(state - m_FlowState));
+                
+                m_FlowState = Mathf.MoveTowards(m_FlowState, state, k_InputFlow * deltaTime);
             }
 
             public void AnimateIK(in Vector3 target, in LookWeight lookWeight)
