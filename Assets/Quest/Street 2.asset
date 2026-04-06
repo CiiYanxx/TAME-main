@@ -37,7 +37,7 @@ MonoBehaviour:
   foodBowlPrefab: {fileID: 2374123203672207794, guid: ae207dc5160add447a013e4fe1ccf4af, type: 3}
   questTitle: Rescue a Stray Dog
   animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
-  locationIndex: 1
+  locationIndex: 0
   missionIndex: 1
   acceptAnswer: Fantastic! Find the animal and bring it back safely.
   progressPointsReward: 10

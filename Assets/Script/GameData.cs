@@ -7,6 +7,6 @@ public class GameData {
     public string customizationData;
 
     // --- MGA BAGONG DAGDAG ---
-    public bool isMissionActive;      // Para malaman kung may tinanggap na mission
-    public int activeMissionIndex;    // Para malaman kung anong mission ang active
+    public bool isMissionActive;      
+    public int activeMissionIndex;    
 }

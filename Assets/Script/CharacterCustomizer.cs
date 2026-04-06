@@ -123,11 +123,13 @@ public class CharacterCustomizer : MonoBehaviour
             }
         }
 
-        // 4. Final Save
-        SaveSystem.Save(missions, points, pos, rawName, appearanceString);
+        // FLAG BILANG NEW GAME: Para lumitaw ang Bus Intro sa susunod na scene load
+        PlayerPrefs.SetInt("IsNewGame", 1); 
         PlayerPrefs.Save();
-        
-        Debug.Log($"<color=green>[Save]</color> Character {rawName} saved with color tags for all dialogs!");
+
+        // 4. Final Save (ito yung gumagawa ng savedata.json)
+        SaveSystem.Save(missions, points, pos, rawName, appearanceString);
+        Debug.Log($"<color=green>[Save]</color> Character {rawName} saved. Flagging as New Game.");
     }
 
     public void LoadCharacter()
