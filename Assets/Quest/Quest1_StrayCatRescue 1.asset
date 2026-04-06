@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Quest1_StrayCatRescue 1
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Dog
+  spawnPosition: {x: 140, y: 1, z: 140}
+  animalRotation: {x: 0, y: 180, z: 0}
+  debrisLocations:
+  - debrisPrefab: {fileID: 675040569403961569, guid: 75a47540d1bbcf84cb8abb0b02dce32f, type: 3}
+    offset: {x: 2, y: 1, z: 2}
+    rotation: {x: 0, y: 0, z: 0}
+  - debrisPrefab: {fileID: 675040569403961569, guid: 75a47540d1bbcf84cb8abb0b02dce32f, type: 3}
+    offset: {x: 3, y: 1, z: 3}
+    rotation: {x: 0, y: 0, z: 0}
+  foodBowlPrefab: {fileID: 2374123203672207794, guid: ae207dc5160add447a013e4fe1ccf4af, type: 3}
+  questTitle: Rescue a Stray Dog
+  animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
+  locationIndex: 0
+  missionIndex: 1
+  acceptAnswer: Fantastic! Find the animal and bring it back safely.
+  progressPointsReward: 10
