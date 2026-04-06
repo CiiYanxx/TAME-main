@@ -5,7 +5,7 @@ using ithappy.Animals_FREE;
 public class AnimalInteractable : MonoBehaviour
 {
     [Header("Quest Data")]
-    public QuestInfo currentQuest;
+    public QuestInfo currentQuest; // Dito kukuha ang PointerController
 
     [Header("Run Away Settings")]
     public float runAwaySpeed = 1.0f;
@@ -16,6 +16,9 @@ public class AnimalInteractable : MonoBehaviour
     public Vector3 emoteOffset = new Vector3(0f, 1.5f, 0f);
 
     private GameObject activeFoodBowl;
+
+    // ADDED: Para matanggap ang data mula sa AnimalMissionLogic
+    public void SetupQuest(QuestInfo info) { currentQuest = info; }
 
     public void SetFoodBowlReference(GameObject bowl) { activeFoodBowl = bowl; }
     

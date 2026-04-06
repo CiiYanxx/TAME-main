@@ -11,7 +11,7 @@ public class AnimalMissionLogic : MonoBehaviour
     public MissionStep currentStep = MissionStep.ClearDebris;
 
     [Header("Distance Settings")]
-    [Tooltip("Gaano kalayo hihinto ang hayop sa pagkain. Taasan ito kung masyadong malapit.")]
+    [Tooltip("Gaano kalayo hihinto ang hayop sa pagkain.")]
     public float stopDistance = 1.2f; 
 
     [Header("UI Buttons (Assigned by RescueController)")]
@@ -35,7 +35,11 @@ public class AnimalMissionLogic : MonoBehaviour
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
         
-        if (animalInteract != null) animalInteract.enabled = false;
+        // Ipinapasa ang QuestInfo sa AnimalInteractable para makuha ng PointerController (Fixed 8/3)
+        if (animalInteract != null) {
+            animalInteract.SetupQuest(info); 
+            animalInteract.enabled = false;
+        }
 
         if (cleanButton != null) {
             cleanButton.gameObject.SetActive(true);
@@ -109,7 +113,12 @@ public class AnimalMissionLogic : MonoBehaviour
         }
     }
 
-    public void OnPlayerInteract() { }
+    // --- FIX: DINAGDAG ITO PARA MAWALA ANG ERROR SA PLAYERINTERACTION ---
+    public void OnPlayerInteract() 
+    { 
+        // Pwedeng walang laman ito kung Buttons naman ang gamit mo sa Clear Debris at Feed.
+        // Pero kailangan ito ng PlayerInteraction script para mag-compile.
+    }
 
     IEnumerator PerformFeedingSequence()
     {
@@ -118,7 +127,6 @@ public class AnimalMissionLogic : MonoBehaviour
         yield return new WaitForSeconds(0.8f); 
 
         Transform playerT = PlayerMovement.Instance.transform;
-        
         float fwd = (RescueController.Instance != null) ? RescueController.Instance.foodForwardOffset : 1.5f;
         float vrt = (RescueController.Instance != null) ? RescueController.Instance.foodVerticalOffset : 0.1f;
 
@@ -141,31 +149,25 @@ public class AnimalMissionLogic : MonoBehaviour
 
         currentStep = MissionStep.FinishedEating;
         if (animalInteract != null) animalInteract.enabled = true;
+        
+        // Tatawag sa PointerController gamit ang QuestInfo na na-setup na
         if (PointerController.Instance != null) PointerController.Instance.ShowTamePrompt(animalInteract);
     }
 
     IEnumerator AnimalWalkToFood(Vector3 targetPos)
     {
         if (animalMover == null) yield break;
-        
         Vector3 stopPos = targetPos; 
         stopPos.y = transform.position.y;
 
-        // ACCURACY FIX: Habang papalapit, dahan-dahang babagal (Lerp speed)
         float currentDistance = Vector3.Distance(transform.position, stopPos);
-
         while (currentDistance > stopDistance)
         {
             currentDistance = Vector3.Distance(transform.position, stopPos);
-            
-            // Speed smoothing para iwas jitter
             float speedScale = Mathf.Clamp01((currentDistance - (stopDistance * 0.5f)) / stopDistance);
             animalMover.SetInput(new Vector2(0, 1 * speedScale), stopPos, false, false);
-            
             yield return null;
         }
-
-        // Forced stop
         animalMover.SetInput(Vector2.zero, transform.position + transform.forward, false, false);
         yield return new WaitForSeconds(2.5f); 
     }

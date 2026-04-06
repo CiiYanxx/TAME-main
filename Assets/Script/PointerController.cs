@@ -25,10 +25,10 @@ public class PointerController : MonoBehaviour
     public GameObject playerInteractButton; 
     public Button tameButton; 
 
-    [Header("Default Settings (Fallback)")]
-    public float moveSpeed = 300f; 
-    public int attemptsRequired = 5;
-    public int maxFailedAttempts = 3; 
+    // MGA VARIABLES NA GALING NA SA QUEST INFO (Hindi na hardcoded dito)
+    private float moveSpeed; 
+    private int attemptsRequired;
+    private int maxFailedAttempts; 
 
     private float travelRange;
     private bool isActive = false;
@@ -74,7 +74,6 @@ public class PointerController : MonoBehaviour
     {
         if (!isActive) return;
 
-        // Accurate PingPong movement based on the parent area's width
         float halfRange = travelRange / 2f;
         float xPos = Mathf.PingPong(Time.time * moveSpeed, travelRange) - halfRange;
         pointerTransform.localPosition = new Vector3(xPos, pointerTransform.localPosition.y, 0f); 
@@ -84,11 +83,20 @@ public class PointerController : MonoBehaviour
     {
         if (travelAreaRect != null) travelRange = travelAreaRect.rect.width;
         
+        // DITO NATIN KINUKUHA LAHAT SA QUEST INFO
         if (animalInteractable != null && animalInteractable.currentQuest != null)
         {
-            attemptsRequired = animalInteractable.currentQuest.requiredSuccesses;
-            maxFailedAttempts = animalInteractable.currentQuest.maxFailures;
-            moveSpeed = animalInteractable.currentQuest.pointerSpeed;
+            QuestInfo q = animalInteractable.currentQuest;
+            attemptsRequired = q.requiredSuccesses;
+            maxFailedAttempts = q.maxFailures;
+            moveSpeed = q.pointerSpeed;
+        }
+        else
+        {
+            // Emergency Fallback kung sakaling walang QuestInfo
+            attemptsRequired = 5;
+            maxFailedAttempts = 3;
+            moveSpeed = 300f;
         }
 
         successfulAttempts = 0; 
@@ -97,7 +105,7 @@ public class PointerController : MonoBehaviour
         minigameUIContainer.SetActive(true);
         pointerTransform.localPosition = new Vector3(0f, pointerTransform.localPosition.y, 0f); 
         
-        UpdateCounterUI();
+        UpdateCounterUI(); 
         RandomizeSafeZonePosition();
     }
     
@@ -105,25 +113,23 @@ public class PointerController : MonoBehaviour
     {
         if (!isActive) return;
 
-        // ACCURACY FIX: Gamitin ang LocalPosition para parehas sila ng reference point
         float pointerX = pointerTransform.localPosition.x;
         float safeZoneX = safeZoneRect.localPosition.x;
-        
-        // Gamitin ang rect.width para makuha ang actual size kahit anong scaling
         float safeZoneHalfWidth = safeZoneRect.rect.width / 2f;
 
-        // Detection logic
         bool success = (pointerX >= (safeZoneX - safeZoneHalfWidth)) && 
                        (pointerX <= (safeZoneX + safeZoneHalfWidth));
 
         if (success) {
             successfulAttempts++;
             UpdateCounterUI();
+            // Tinitingnan ang target value mula sa QuestInfo
             if (successfulAttempts >= attemptsRequired) EndMinigame(true);
             else ResetPointerAndAdvance();
         } else {
             failedAttemptsCount++;
             UpdateCounterUI();
+            // Tinitingnan ang limit mula sa QuestInfo
             if (failedAttemptsCount >= maxFailedAttempts) EndMinigame(false);
             else ResetPointerAndAdvance();
         }
@@ -133,13 +139,14 @@ public class PointerController : MonoBehaviour
     {
         if (successText != null) 
         {
-            int remainingSuccess = attemptsRequired - successfulAttempts;
-            successText.text = remainingSuccess.ToString();
+            // Ipinapakita kung ilan na lang ang kailangan base sa QuestInfo data
+            int remaining = Mathf.Max(0, attemptsRequired - successfulAttempts);
+            successText.text = remaining.ToString();
         }
 
         if (failText != null) 
         {
-            int remainingLives = maxFailedAttempts - failedAttemptsCount;
+            int remainingLives = Mathf.Max(0, maxFailedAttempts - failedAttemptsCount);
             failText.text = remainingLives.ToString();
         }
     }
@@ -187,7 +194,6 @@ public class PointerController : MonoBehaviour
     }
 
     private void RandomizeSafeZonePosition() { 
-        // Siguraduhin na ang safe zone ay hindi lalabas sa travel area
         float maxOffset = (travelRange / 2f) - (safeZoneRect.rect.width / 2f); 
         float newX = Random.Range(-maxOffset, maxOffset); 
         safeZoneRect.localPosition = new Vector3(newX, safeZoneRect.localPosition.y, 0f); 
