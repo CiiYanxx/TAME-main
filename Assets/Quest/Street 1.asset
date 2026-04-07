@@ -34,7 +34,7 @@ MonoBehaviour:
   - debrisPrefab: {fileID: 675040569403961569, guid: 75a47540d1bbcf84cb8abb0b02dce32f, type: 3}
     offset: {x: 2, y: 0, z: -0.17}
     rotation: {x: -90, y: 0, z: 0}
-  foodBowlPrefab: {fileID: 2374123203672207794, guid: ae207dc5160add447a013e4fe1ccf4af, type: 3}
+  foodBowlPrefab: {fileID: 2652593992426441465, guid: a47ab2dc37d247e44873529fef5e90a2, type: 3}
   questTitle: Rescue a Stray Cat
   animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
   locationIndex: 0
