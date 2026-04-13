@@ -13,6 +13,12 @@ public class QuestInfo : ScriptableObject {
     [Header("Animal Settings")]
     [Tooltip("This name MUST match the name of the prefab in the RescueController list.")]
     public string targetAnimalName = "Stray Cat";
+    
+    // --- DAGDAG MO ITO ---
+    [TextArea(3, 10)] 
+    public string description = "Describe the animal's condition here..."; 
+    // ---------------------
+
     public Vector3 spawnPosition;
     public Vector3 animalRotation; 
 

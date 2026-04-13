@@ -19,7 +19,6 @@ public class NPC : MonoBehaviour
     
     [Header("Distance Settings")]
     public float interactionDistance = 3.5f; 
-    // OPTIMIZATION: Check interval para iwas lag
     private float nextCheckTime;
     private float checkInterval = 0.2f; 
 
@@ -27,6 +26,9 @@ public class NPC : MonoBehaviour
     private string coloredPlayerName = "Player";
     private bool missionReturned = false;
     private bool lastMissionWasSuccess = false;
+
+    // Dictionary para i-store ang cooldowns ng bawat mission (MissionID, CooldownEndTime)
+    private Dictionary<string, float> missionCooldowns = new Dictionary<string, float>();
 
     private void Awake() 
     { 
@@ -85,10 +87,15 @@ public class NPC : MonoBehaviour
             { 
                 active.isCompleted = true; 
                 totalCompletedMissions++;
+                // I-save na success para sa UI ng QuestCard
+                PlayerPrefs.SetInt("Mission_" + active.info.targetAnimalName, 1);
             }
             else 
             {
                 active.accepted = false; 
+                // Mag-set ng cooldown pag nag-fail (Halimbawa: 30 seconds)
+                string missionID = active.info.targetAnimalName;
+                missionCooldowns[missionID] = Time.time + 30f; 
             }
 
             PlayerPrefs.SetInt("IsMissionActive", 0);
@@ -110,7 +117,6 @@ public class NPC : MonoBehaviour
 
     void Update()
     {
-        // OPTIMIZATION: Imbes na bawat frame, i-check lang distansya bawat 0.2 seconds
         if (Time.time >= nextCheckTime)
         {
             nextCheckTime = Time.time + checkInterval;
@@ -122,7 +128,6 @@ public class NPC : MonoBehaviour
     {
         if (PlayerMovement.Instance == null) return;
 
-        // Gamit ang sqrMagnitude (mas mabilis kaysa Vector3.Distance)
         float sqrDist = (transform.position - PlayerMovement.Instance.transform.position).sqrMagnitude;
         float sqrLimit = interactionDistance * interactionDistance;
         
@@ -259,15 +264,26 @@ public class NPC : MonoBehaviour
     public void ShowAnimalSelection(int locID)
     {
         DialogSystem.Instance.OpenAnimalSelection();
-        foreach (Transform child in DialogSystem.Instance.animalListContainer) Destroy(child.gameObject);
+        DialogSystem.Instance.ClearAnimalList(); // Gamitin ang bagong Clear method
         
         foreach (QuestInfo info in allQuests.FindAll(q => q.locationIndex == locID)) 
         {
-            GameObject card = Instantiate(DialogSystem.Instance.animalRowPrefab, DialogSystem.Instance.animalListContainer);
-            int mIdx = (info.locationIndex * 10) + info.missionIndex;
-            bool canPlay = (totalCompletedMissions >= mIdx);
-            bool alreadyDone = (totalCompletedMissions > mIdx);
-            card.GetComponent<QuestCard>().Setup(info, this, canPlay && !alreadyDone);
+            GameObject cardObj = Instantiate(DialogSystem.Instance.animalRowPrefab, DialogSystem.Instance.animalListContainer);
+            QuestCard card = cardObj.GetComponent<QuestCard>();
+
+            // Logic: Bukas lahat basta unlocked ang location. 
+            // Ang QuestCard ang mag-ha-handle kung success o cooldown.
+            card.Setup(info, this, true);
+
+            // I-check kung may active cooldown para sa hayop na ito
+            if (missionCooldowns.ContainsKey(info.targetAnimalName))
+            {
+                float remaining = missionCooldowns[info.targetAnimalName] - Time.time;
+                if (remaining > 0)
+                {
+                    card.StartCooldown(remaining);
+                }
+            }
         }
     }
 

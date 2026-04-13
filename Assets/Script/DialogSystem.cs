@@ -12,10 +12,15 @@ public class DialogSystem : MonoBehaviour
     public Button option1BTN; 
     public Button option2BTN; 
 
+    [Header("NEW: Mission Preview Panel")]
+    public GameObject previewPanel;
+    public Image previewAnimalImage;
+    public TextMeshProUGUI previewStatsText;
+    public Button confirmPreviewBtn;
+
     [Header("2nd Step: Location Selection")]
     public GameObject locationSelectionPanel;
     public Button[] locationCards; 
-    // BAGONG VARIABLE: I-drag dito ang Lock Images ng bawat Location Card
     public GameObject[] locationLocks; 
 
     [Header("3rd Step: Animal Selection")]
@@ -28,72 +33,69 @@ public class DialogSystem : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     private void Start()
     {
         CloseAllPanels();
 
-        // I-setup ang listener para sa Back Button
         if (backToNPCBTN != null)
         {
-            backToNPCBTN.onClick.RemoveAllListeners(); // Siguraduhin na walang duplicate listeners
             backToNPCBTN.onClick.AddListener(() => {
-                if (NPC.Instance != null) 
-                {
-                    NPC.Instance.EndConversation(); 
-                }
-                else 
-                {
-                    CloseAllPanels();
-                }
+                if (NPC.Instance != null) NPC.Instance.EndConversation(); 
+                else CloseAllPanels();
             });
         }
     }
 
-    // --- OPTIMIZATION: Iwas UI Flicker at Lag ---
+    // --- STEP 2 LOGIC: Preview muna bago Dialog ---
+    public void OpenMissionPreview(QuestInfo info, NPC npc)
+    {
+        CloseAllPanels();
+        previewPanel.SetActive(true);
+
+        if (previewAnimalImage) previewAnimalImage.sprite = info.animalIcon;
+        if (previewStatsText) previewStatsText.text = $"Name: {info.targetAnimalName}\nProblem: {info.description}";
+
+        confirmPreviewBtn.onClick.RemoveAllListeners();
+        confirmPreviewBtn.onClick.AddListener(() => {
+            previewPanel.SetActive(false);
+            OpenDialogUI(); // Lilipat na sa Main Dialog
+            npc.AcceptMission(info); // Dito lang talaga maa-accept
+        });
+    }
+
     public void CloseAllPanels()
     {
-        if (dialogPanel && dialogPanel.activeSelf) dialogPanel.SetActive(false);
-        if (locationSelectionPanel && locationSelectionPanel.activeSelf) locationSelectionPanel.SetActive(false);
-        if (animalSelectionPanel && animalSelectionPanel.activeSelf) animalSelectionPanel.SetActive(false);
+        if (dialogPanel) dialogPanel.SetActive(false);
+        if (locationSelectionPanel) locationSelectionPanel.SetActive(false);
+        if (animalSelectionPanel) animalSelectionPanel.SetActive(false);
+        if (previewPanel) previewPanel.SetActive(false);
     }
 
     public void OpenDialogUI()
     {
-        if (dialogPanel != null && dialogPanel.activeSelf) return; // Wag nang i-open kung open na
         CloseAllPanels();
         if (dialogPanel) dialogPanel.SetActive(true);
     }
 
     public void OpenLocationSelection()
     {
-        if (locationSelectionPanel != null && locationSelectionPanel.activeSelf) return;
         CloseAllPanels();
         if (locationSelectionPanel) locationSelectionPanel.SetActive(true);
     }
 
     public void OpenAnimalSelection()
     {
-        if (animalSelectionPanel != null && animalSelectionPanel.activeSelf) return;
         CloseAllPanels();
         if (animalSelectionPanel) animalSelectionPanel.SetActive(true);
     }
 
-    // DAGDAG: Gamitin ito sa NPC script para linisin ang listahan nang mas mabilis
     public void ClearAnimalList()
     {
         if (animalListContainer == null) return;
-        
-        // Mas mabilis ito kaysa sa normal na Destroy sa loob ng foreach
         for (int i = animalListContainer.childCount - 1; i >= 0; i--)
         {
             Destroy(animalListContainer.GetChild(i).gameObject);
