@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -10,10 +11,15 @@ public class PlayerMovement : MonoBehaviour
     [Header("Input & Camera References")]
     public VirtualJoystick moveJoystick; 
     public FixedTouchField touchField; 
-    public Camera playerCamera;         
+    public Camera playerCamera;          
     public Transform cameraOrbitTarget; 
     public CharacterCustomizer customizer;
     public GameObject mainCanvas;
+
+    [Header("Sneak Settings")]
+    public bool isSneaking = false; // Check kung naka-sneak
+    public float sneakSpeed = 2.0f; // Bilis kapag naka-sneak
+    public bool isRunning = false;  // Detection para sa takot ng hayop
 
     [Header("Bus Cinematic Settings")]
     public GameObject busPrefab;
@@ -40,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator anim;
     private float cameraPitch, cameraYaw, defaultDistance, currentCameraDistance, verticalVelocity;
     private float autoSaveTimer = 0f;
-    private Coroutine cinematicCoroutine; // Para sa safe stopping ng intro
+    private Coroutine cinematicCoroutine; 
 
     [HideInInspector] public bool canControl = false, isInteracting = false;
 
@@ -52,7 +58,6 @@ public class PlayerMovement : MonoBehaviour
         anim = GetComponent<Animator>();
         Application.targetFrameRate = 60;
 
-        // 1. AGAD NA ITAGO ANG UI AT PLAYER (Anti-Flicker)
         if (mainCanvas != null) mainCanvas.SetActive(false);
         TogglePlayerVisuals(false);
 
@@ -68,42 +73,34 @@ public class PlayerMovement : MonoBehaviour
         StartCoroutine(InitializeGameFlow());
     }
 
+    // --- SNEAK FUNCTION: Ikabit ito sa UI Button ---
+    public void ToggleSneak()
+    {
+        isSneaking = !isSneaking;
+        if(anim != null) anim.SetBool("isCrouching", isSneaking); // Siguraduhin na may 'isCrouching' bool sa Animator
+    }
+
     IEnumerator InitializeGameFlow()
     {
-        // 1. I-check agad kung may save at HINDI new game
         bool isNewGame = PlayerPrefs.GetInt("IsNewGame", 0) == 1;
 
         if (SaveSystem.HasSave() && !isNewGame)
         {
-            Debug.Log("Save found. Loading world instantly...");
             LoadPlayerPosition();
             SkipIntroCinematic();
-            // EXIT AGAD DITO: Wala nang delay, wala nang intro.
             yield break; 
         }
-
-        // 2. KUNG WALANG SAVE o NEW GAME, dito lang gagana ang delay at intro
-        Debug.Log("Starting Bus Intro Sequence...");
-        
-        // Initial delay para sa cinematic feel (Invisible ang player)
-        yield return new WaitForSeconds(1.0f); 
-
-        PlayerPrefs.SetInt("IsNewGame", 0); 
-        PlayerPrefs.Save();
 
         if (controller != null) controller.enabled = false;
         transform.position = defaultSpawnPosition;
         if (controller != null) controller.enabled = true;
 
-        // Simulan ang cinematic
         cinematicCoroutine = StartCoroutine(PlayFullCinematicMaster());
     }
 
     IEnumerator PlayFullCinematicMaster()
     {
         canControl = false; 
-
-        // Independent Bus Coroutine (Hindi ito mamatay sa Skip)
         StartCoroutine(MoveBusSequence());
         StartCoroutine(DelayedPlayerShow());
 
@@ -118,7 +115,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
         yield return StartCoroutine(ReturnToDefaultView());
-        
         cinematicCoroutine = null;
         FinishIntro(); 
     }
@@ -127,19 +123,10 @@ public class PlayerMovement : MonoBehaviour
     {
         if (busPrefab == null || busStartPoint == null) yield break;
         GameObject bus = Instantiate(busPrefab, busStartPoint.position, busStartPoint.rotation);
-        
-        // Lakbay papunta sa stop
         yield return StartCoroutine(LerpBus(bus, busStopPoint.position)); 
-        
-        // Hinto para bumaba ang player
         yield return new WaitForSeconds(waitAtStopDuration); 
-        
-        // Paalis na papunta sa dulo (Dito siya nag-e-error dati)
         yield return StartCoroutine(LerpBus(bus, busEndPoint.position)); 
-
-        // 3. SIGURADONG MA-DE-DESTROY NA SIYA DITO
         Destroy(bus);
-        Debug.Log("<color=yellow>Bus successfully reached end point and was destroyed.</color>");
     }
 
     IEnumerator LerpBus(GameObject bus, Vector3 target)
@@ -162,13 +149,11 @@ public class PlayerMovement : MonoBehaviour
 
     public void SkipIntroCinematic()
     {
-        // I-stop lang ang camera/cinematic logic, WAG ang bus
         if (cinematicCoroutine != null)
         {
             StopCoroutine(cinematicCoroutine);
             cinematicCoroutine = null;
         }
-        
         FinishIntro();
     }
 
@@ -186,7 +171,6 @@ public class PlayerMovement : MonoBehaviour
     private void DoAutoSave()
     {
         if (!canControl) return; 
-
         if (NPC.Instance == null) return;
         string appearance = "";
         if (customizer != null)
@@ -236,7 +220,7 @@ public class PlayerMovement : MonoBehaviour
         float targetD = defaultDistance;
         RaycastHit hit;
         if (Physics.SphereCast(cameraOrbitTarget.position, collisionRadius, dir, out hit, defaultDistance, collisionLayers))
-            targetD = Mathf.Clamp(hit.distance, minCollisionDistance, defaultDistance);
+            targetD = Mathf.Clamp(hit.distance * 0.9f, minCollisionDistance, defaultDistance);
         currentCameraDistance = Mathf.Lerp(currentCameraDistance, targetD, Time.deltaTime * cameraSmoothSpeed);
         playerCamera.transform.rotation = rotation;
         playerCamera.transform.position = cameraOrbitTarget.position + (dir * currentCameraDistance);
@@ -247,11 +231,21 @@ public class PlayerMovement : MonoBehaviour
         if (moveJoystick == null || playerCamera == null) return;
         if (controller.isGrounded) verticalVelocity = -2.0f; 
         else verticalVelocity -= 9.81f * Time.deltaTime;
+        
         Vector2 input = moveJoystick.Direction;
         Vector3 camF = Vector3.Scale(playerCamera.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 camR = Vector3.Scale(playerCamera.transform.right, new Vector3(1, 0, 1)).normalized;
         Vector3 moveDir = (camF * input.y) + (camR * input.x);
-        Vector3 finalMove = moveDir * moveSpeed; finalMove.y = verticalVelocity;
+
+        // --- DITO NATIN BINAGO ANG SPEED BASE SA SNEAK ---
+        float currentSpeed = isSneaking ? sneakSpeed : moveSpeed;
+        
+        // Detection para sa takot ng hayop: Kung mabilis ang joystick at HINDI naka-sneak
+        isRunning = (input.magnitude > 0.7f && !isSneaking);
+
+        Vector3 finalMove = moveDir * currentSpeed; 
+        finalMove.y = verticalVelocity;
+
         if (moveDir.magnitude > 0.1f)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), Time.deltaTime * orbitRotationSpeed);

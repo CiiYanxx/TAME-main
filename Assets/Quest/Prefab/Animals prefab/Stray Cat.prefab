@@ -1607,10 +1607,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentStep: 0
   stopDistance: 1
-  cleanButton: {fileID: 0}
   feedButton: {fileID: 0}
   interactButton: {fileID: 0}
-  detectionRange: 4
 --- !u!1 &9082582335497733526
 GameObject:
   m_ObjectHideFlags: 0

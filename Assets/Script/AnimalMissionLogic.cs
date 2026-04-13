@@ -6,119 +6,115 @@ using ithappy.Animals_FREE;
 
 public class AnimalMissionLogic : MonoBehaviour
 {
-    public enum MissionStep { ClearDebris, Feeding, Eating, FinishedEating, Minigame }
+    public enum MissionStep { BuildTrust, Feeding, Eating, FinishedEating, Minigame }
     [Header("Mission Status")]
-    public MissionStep currentStep = MissionStep.ClearDebris;
+    public MissionStep currentStep = MissionStep.BuildTrust;
 
     [Header("Distance Settings")]
-    [Tooltip("Gaano kalayo hihinto ang hayop sa pagkain.")]
     public float stopDistance = 1.2f; 
 
-    [Header("UI Buttons (Assigned by RescueController)")]
-    public Button cleanButton; 
-    public Button feedButton;
+    [HideInInspector] public Button cleanButton; // Placeholder to avoid controller errors
+    [HideInInspector] public Button feedButton;
     [HideInInspector] public Button interactButton; 
     
-    [Header("Detection Settings")]
-    public float detectionRange = 4.0f; 
-
-    private List<DebrisItem> debrisInRoom = new List<DebrisItem>(); 
-    private DebrisItem currentTargetDebris;
     private GameObject spawnedFoodBowl;
     private QuestInfo missionData;
     private AnimalInteractable animalInteract;
     private CreatureMover animalMover; 
+    private float trustLevel = 0f;
+    private Transform playerTransform;
+    private LineRenderer circleRenderer;
 
     public void SetupMission(QuestInfo info)
     {
         missionData = info;
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
+        playerTransform = PlayerMovement.Instance.transform;
         
-        // Ipinapasa ang QuestInfo sa AnimalInteractable para makuha ng PointerController (Fixed 8/3)
         if (animalInteract != null) {
             animalInteract.SetupQuest(info); 
             animalInteract.enabled = false;
         }
 
-        if (cleanButton != null) {
-            cleanButton.gameObject.SetActive(true);
-            cleanButton.onClick.RemoveAllListeners();
-            cleanButton.onClick.AddListener(OnCleanButtonPressed);
+        // Setup the Visual Radius Line
+        SetupCircleRenderer();
+
+        if (RescueController.Instance.feedButton != null) {
+            RescueController.Instance.feedButton.gameObject.SetActive(false);
+            RescueController.Instance.feedButton.onClick.RemoveAllListeners();
+            RescueController.Instance.feedButton.onClick.AddListener(OnFeedButtonPressed);
         }
 
-        if (feedButton != null) {
-            feedButton.gameObject.SetActive(false);
-            feedButton.onClick.RemoveAllListeners();
-            feedButton.onClick.AddListener(OnFeedButtonPressed);
-        }
+        currentStep = MissionStep.BuildTrust;
+    }
 
-        foreach (DebrisSpawnData data in info.debrisLocations)
+    private void SetupCircleRenderer()
+    {
+        circleRenderer = gameObject.AddComponent<LineRenderer>();
+        circleRenderer.useWorldSpace = false;
+        circleRenderer.loop = true;
+        circleRenderer.positionCount = 51;
+        circleRenderer.startWidth = 0.04f; // Manipis na linya
+        circleRenderer.endWidth = 0.04f;
+        circleRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        circleRenderer.startColor = new Color(1f, 0.92f, 0.016f, 0.4f); // Yellow half-transparent
+        circleRenderer.endColor = new Color(1f, 0.92f, 0.016f, 0.4f);
+
+        float angle = 0f;
+        for (int i = 0; i < 51; i++)
         {
-            if (data.debrisPrefab != null)
-            {
-                Vector3 spawnPos = transform.position + data.offset;
-                if (RescueController.Instance != null) spawnPos.y += RescueController.Instance.debrisVerticalOffset;
+            float x = Mathf.Sin(Mathf.Deg2Rad * angle) * missionData.detectionRadius;
+            float z = Mathf.Cos(Mathf.Deg2Rad * angle) * missionData.detectionRadius;
+            circleRenderer.SetPosition(i, new Vector3(x, 0.05f, z)); // Konting taas para di lubog
+            angle += 360f / 50;
+        }
+    }
 
-                GameObject dObj = Instantiate(data.debrisPrefab, spawnPos, Quaternion.Euler(data.rotation));
-                if (RescueController.Instance != null) RescueController.Instance.AddGravity(dObj);
-                
-                DebrisItem item = dObj.GetComponent<DebrisItem>() ?? dObj.AddComponent<DebrisItem>();
-                debrisInRoom.Add(item);
+    void Update() 
+    { 
+        if (currentStep == MissionStep.BuildTrust) HandleTrustLogic(); 
+    }
+
+    private void HandleTrustLogic()
+    {
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+
+        // Ang Noise Meter ay lilitaw lang pag nasa loob ng radius line
+        if (distance <= missionData.detectionRadius)
+        {
+            if (PlayerMovement.Instance.isRunning) trustLevel -= Time.deltaTime * 0.4f;
+            else if (PlayerMovement.Instance.isSneaking) trustLevel += Time.deltaTime * missionData.trustDifficulty;
+
+            trustLevel = Mathf.Clamp01(trustLevel);
+            RescueController.Instance.UpdateTrustUI(trustLevel, true);
+        }
+        else 
+        {
+            RescueController.Instance.UpdateTrustUI(trustLevel, false);
+        }
+
+        if (trustLevel >= 0.95f && distance <= 3.5f) {
+            if (RescueController.Instance.feedButton != null && !RescueController.Instance.feedButton.gameObject.activeSelf) {
+                RescueController.Instance.feedButton.gameObject.SetActive(true);
+                RescueController.Instance.UpdateTrustUI(trustLevel, false);
+                if (circleRenderer != null) circleRenderer.enabled = false; // Hide pag panalo na
             }
         }
     }
 
-    void Update() { if (currentStep == MissionStep.ClearDebris) HighlightNearest(); }
-
-    public void UpdateDebrisDetection(DebrisItem debris, bool isEntering) { HighlightNearest(); }
-
-    public void OnCleanButtonPressed()
-    {
-        if (currentStep != MissionStep.ClearDebris || currentTargetDebris == null) return;
-        DebrisItem toRemove = currentTargetDebris;
-        debrisInRoom.Remove(toRemove);
-        toRemove.StartDissolve(); 
-        currentTargetDebris = null;
-        if (debrisInRoom.Count == 0) 
-        {
+    public void OnFeedButtonPressed() {
+        if (currentStep == MissionStep.BuildTrust && trustLevel >= 0.9f) {
+            RescueController.Instance.feedButton.gameObject.SetActive(false);
             currentStep = MissionStep.Feeding;
-            if (cleanButton != null) cleanButton.gameObject.SetActive(false);
-            if (feedButton != null) feedButton.gameObject.SetActive(true); 
-        }
-    }
-
-    public void HighlightNearest()
-    {
-        debrisInRoom.RemoveAll(d => d == null);
-        DebrisItem nearest = null;
-        float minDistance = detectionRange;
-        Vector3 playerPos = PlayerMovement.Instance.transform.position;
-        foreach (DebrisItem d in debrisInRoom)
-        {
-            float dist = Vector3.Distance(playerPos, d.transform.position);
-            if (dist < minDistance) { minDistance = dist; nearest = d; }
-        }
-        if (currentTargetDebris != null && currentTargetDebris != nearest) currentTargetDebris.SetHighlight(false);
-        if (nearest != null) { currentTargetDebris = nearest; currentTargetDebris.SetHighlight(true); }
-        else { currentTargetDebris = null; }
-    }
-
-    public void OnFeedButtonPressed()
-    {
-        if (currentStep == MissionStep.Feeding) 
-        {
-            if (feedButton != null) feedButton.gameObject.SetActive(false);
             StartCoroutine(PerformFeedingSequence());
         }
     }
 
-    // --- FIX: DINAGDAG ITO PARA MAWALA ANG ERROR SA PLAYERINTERACTION ---
-    public void OnPlayerInteract() 
-    { 
-        // Pwedeng walang laman ito kung Buttons naman ang gamit mo sa Clear Debris at Feed.
-        // Pero kailangan ito ng PlayerInteraction script para mag-compile.
-    }
+    // Original functions kept to avoid errors
+    public void OnPlayerInteract() { }
+    public void UpdateDebrisDetection(DebrisItem d, bool b) { }
+    public void OnCleanButtonPressed() { }
 
     IEnumerator PerformFeedingSequence()
     {
@@ -127,20 +123,11 @@ public class AnimalMissionLogic : MonoBehaviour
         yield return new WaitForSeconds(0.8f); 
 
         Transform playerT = PlayerMovement.Instance.transform;
-        float fwd = (RescueController.Instance != null) ? RescueController.Instance.foodForwardOffset : 1.5f;
-        float vrt = (RescueController.Instance != null) ? RescueController.Instance.foodVerticalOffset : 0.1f;
-
-        Vector3 spawnPos = playerT.position + (playerT.forward * fwd);
-
-        RaycastHit hit;
-        if (Physics.Raycast(spawnPos + Vector3.up * 2f, Vector3.down, out hit, 5f)) {
-            spawnPos.y = hit.point.y + vrt;
-        } else {
-            spawnPos.y = playerT.position.y + vrt; 
-        }
+        Vector3 spawnPos = playerT.position + (playerT.forward * RescueController.Instance.foodForwardOffset);
+        spawnPos.y += RescueController.Instance.foodVerticalOffset;
 
         spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, playerT.rotation);
-        if (RescueController.Instance != null) RescueController.Instance.AddGravity(spawnedFoodBowl);
+        RescueController.Instance.AddGravity(spawnedFoodBowl);
         if (animalInteract != null) animalInteract.SetFoodBowlReference(spawnedFoodBowl);
 
         yield return new WaitForSeconds(2.0f); 
@@ -149,8 +136,6 @@ public class AnimalMissionLogic : MonoBehaviour
 
         currentStep = MissionStep.FinishedEating;
         if (animalInteract != null) animalInteract.enabled = true;
-        
-        // Tatawag sa PointerController gamit ang QuestInfo na na-setup na
         if (PointerController.Instance != null) PointerController.Instance.ShowTamePrompt(animalInteract);
     }
 
@@ -159,7 +144,6 @@ public class AnimalMissionLogic : MonoBehaviour
         if (animalMover == null) yield break;
         Vector3 stopPos = targetPos; 
         stopPos.y = transform.position.y;
-
         float currentDistance = Vector3.Distance(transform.position, stopPos);
         while (currentDistance > stopDistance)
         {
