@@ -13,20 +13,10 @@ MonoBehaviour:
   m_Name: Street 1
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat
-  animalDetails: 'BREED: Siamese Mix (Puspin)
-
-    AGE: Kitten
-
-    CONDITION: Weak
-    & Soaked in Mud
-
-    BEHAVIOR: Energetic but Frightened
-
-    DIET: Clean Water
-    & Soft Food'
-  missionDescription: 'DESCRIPTION: This kitten fell into a narrow drainage pipe
-    and is covered in filth. It is very agile and difficult to catch. You must rescue
-    it immediately to prevent further illness from the contaminated water.'
+  animalDetails: "BREED: Siamese (Puspin)\nAGE: Kitten\nCOLOR: Orange & White \nCONDITION:
+    Weak & Hungry\nBEHAVIOR: Energetic but Frightened\nDIET: Clean Water & Soft Food"
+  missionDescription: "DESCRIPTION: This kitten fell into a narrow drainage pipe
+    and is covered in filth. \n\nHINT: \"East side of the Center near the tree\""
   spawnPosition: {x: 207.91, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   debrisLocations:
@@ -51,6 +41,7 @@ MonoBehaviour:
   foodBowlPrefab: {fileID: 2652593992426441465, guid: a47ab2dc37d247e44873529fef5e90a2, type: 3}
   questTitle: Rescue a Stray Cat
   animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 08db40237dab3b34c82891152b152eb8, type: 3}
   locationIndex: 0
   missionIndex: 0
   acceptAnswer: Fantastic! Find the animal and bring it back safely.
