@@ -27,8 +27,9 @@ public class NPC : MonoBehaviour
     private bool missionReturned = false;
     private bool lastMissionWasSuccess = false;
 
-    // Dictionary para i-store ang cooldowns ng bawat mission (MissionID, CooldownEndTime)
+    // Dictionary para sa cooldowns at fail counts
     private Dictionary<string, float> missionCooldowns = new Dictionary<string, float>();
+    private Dictionary<string, int> missionFailCounts = new Dictionary<string, int>();
 
     private void Awake() 
     { 
@@ -83,19 +84,32 @@ public class NPC : MonoBehaviour
         Quest active = quests.Find(q => q.accepted && !q.isCompleted);
         if (active != null) 
         {
+            string missionID = active.info.targetAnimalName;
+
             if (success) 
             { 
                 active.isCompleted = true; 
                 totalCompletedMissions++;
-                // I-save na success para sa UI ng QuestCard
-                PlayerPrefs.SetInt("Mission_" + active.info.targetAnimalName, 1);
+                PlayerPrefs.SetInt("Mission_" + missionID, 1);
+                
+                // I-reset ang fail count pag nag-success na
+                if (missionFailCounts.ContainsKey(missionID)) missionFailCounts[missionID] = 0;
             }
             else 
             {
                 active.accepted = false; 
-                // Mag-set ng cooldown pag nag-fail (Halimbawa: 30 seconds)
-                string missionID = active.info.targetAnimalName;
-                missionCooldowns[missionID] = Time.time + 30f; 
+
+                // 1. I-update ang Fail Count
+                if (!missionFailCounts.ContainsKey(missionID)) missionFailCounts[missionID] = 0;
+                missionFailCounts[missionID]++;
+
+                // 2. Calculate Penalty (1 min per fail count)
+                float baseCooldown = 60f; // 1 minute
+                float totalPenalty = baseCooldown * missionFailCounts[missionID];
+
+                missionCooldowns[missionID] = Time.time + totalPenalty; 
+
+                Debug.Log($"Mission Failed {missionFailCounts[missionID]} times. Cooldown set to {totalPenalty}s");
             }
 
             PlayerPrefs.SetInt("IsMissionActive", 0);
@@ -264,18 +278,15 @@ public class NPC : MonoBehaviour
     public void ShowAnimalSelection(int locID)
     {
         DialogSystem.Instance.OpenAnimalSelection();
-        DialogSystem.Instance.ClearAnimalList(); // Gamitin ang bagong Clear method
+        DialogSystem.Instance.ClearAnimalList(); 
         
         foreach (QuestInfo info in allQuests.FindAll(q => q.locationIndex == locID)) 
         {
             GameObject cardObj = Instantiate(DialogSystem.Instance.animalRowPrefab, DialogSystem.Instance.animalListContainer);
             QuestCard card = cardObj.GetComponent<QuestCard>();
 
-            // Logic: Bukas lahat basta unlocked ang location. 
-            // Ang QuestCard ang mag-ha-handle kung success o cooldown.
             card.Setup(info, this, true);
 
-            // I-check kung may active cooldown para sa hayop na ito
             if (missionCooldowns.ContainsKey(info.targetAnimalName))
             {
                 float remaining = missionCooldowns[info.targetAnimalName] - Time.time;

@@ -12,18 +12,19 @@ public class DialogSystem : MonoBehaviour
     public Button option1BTN; 
     public Button option2BTN; 
 
-    [Header("NEW: Mission Preview Panel")]
+    [Header("2nd Step: Mission Preview Panel")]
     public GameObject previewPanel;
     public Image previewAnimalImage;
-    public TextMeshProUGUI previewStatsText;
+    public TextMeshProUGUI detailsText;   
+    public TextMeshProUGUI descriptionText; 
     public Button confirmPreviewBtn;
 
-    [Header("2nd Step: Location Selection")]
+    [Header("3rd Step: Location Selection")]
     public GameObject locationSelectionPanel;
     public Button[] locationCards; 
     public GameObject[] locationLocks; 
 
-    [Header("3rd Step: Animal Selection")]
+    [Header("4th Step: Animal Selection")]
     public GameObject animalSelectionPanel;
     public GameObject animalRowPrefab; 
     public Transform animalListContainer; 
@@ -50,21 +51,57 @@ public class DialogSystem : MonoBehaviour
         }
     }
 
-    // --- STEP 2 LOGIC: Preview muna bago Dialog ---
     public void OpenMissionPreview(QuestInfo info, NPC npc)
     {
         CloseAllPanels();
-        previewPanel.SetActive(true);
+        if (previewPanel) previewPanel.SetActive(true);
 
-        if (previewAnimalImage) previewAnimalImage.sprite = info.animalIcon;
-        if (previewStatsText) previewStatsText.text = $"Name: {info.targetAnimalName}\nProblem: {info.description}";
+        if (previewAnimalImage && info.animalFullPreview != null) 
+            previewAnimalImage.sprite = info.animalFullPreview;
+        
+        // AUTO-COLORING LOGIC
+        if (detailsText)
+        {
+            // Details Labels: Light Blue (#40A6CE)
+            string coloredDetails = info.animalDetails
+                .Replace("BREED:", "<color=#40A6CE>BREED:</color>")
+                .Replace("AGE:", "<color=#40A6CE>AGE:</color>")
+                .Replace("STATUS:", "<color=#40A6CE>STATUS:</color>")
+                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>")
+                .Replace("CONDITION:", "<color=#40A6CE>CONDITION:</color>")
+                .Replace("BEHAVIOR:", "<color=#40A6CE>BEHAVIOR:</color>")
+                .Replace("DIET:", "<color=#40A6CE>DIET:</color>");
+            detailsText.text = coloredDetails;
+        }
 
-        confirmPreviewBtn.onClick.RemoveAllListeners();
-        confirmPreviewBtn.onClick.AddListener(() => {
-            previewPanel.SetActive(false);
-            OpenDialogUI(); // Lilipat na sa Main Dialog
-            npc.AcceptMission(info); // Dito lang talaga maa-accept
-        });
+        if (descriptionText)
+        {
+            // Description Label: Light Blue (#40A6CE)
+            // Hint Label & Content: Green (#00FF00)
+            string rawDesc = info.missionDescription;
+
+            string coloredDesc = rawDesc
+                .Replace("DESCRIPTION:", "<color=#40A6CE>DESCRIPTION:</color>");
+
+            // Para sa Hint, pati yung kasunod na text ay magiging green hanggang sa dulo ng line
+            if (coloredDesc.Contains("HINT:"))
+            {
+                coloredDesc = coloredDesc.Replace("HINT:", "<color=#00FF00>HINT:");
+                coloredDesc += "</color>"; // Isinasara ang green tag para sa hint part
+            }
+
+            descriptionText.text = coloredDesc;
+        }
+
+        if (confirmPreviewBtn != null)
+        {
+            confirmPreviewBtn.onClick.RemoveAllListeners();
+            confirmPreviewBtn.onClick.AddListener(() => {
+                if (previewPanel) previewPanel.SetActive(false);
+                OpenDialogUI(); 
+                npc.AcceptMission(info); 
+            });
+        }
     }
 
     public void CloseAllPanels()

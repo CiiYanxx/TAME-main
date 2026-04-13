@@ -13,6 +13,20 @@ MonoBehaviour:
   m_Name: Street 1
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat
+  animalDetails: 'BREED: Siamese Mix (Puspin)
+
+    AGE: Kitten
+
+    CONDITION: Weak
+    & Soaked in Mud
+
+    BEHAVIOR: Energetic but Frightened
+
+    DIET: Clean Water
+    & Soft Food'
+  missionDescription: 'DESCRIPTION: This kitten fell into a narrow drainage pipe
+    and is covered in filth. It is very agile and difficult to catch. You must rescue
+    it immediately to prevent further illness from the contaminated water.'
   spawnPosition: {x: 207.91, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   debrisLocations:

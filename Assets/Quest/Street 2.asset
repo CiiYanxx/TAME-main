@@ -13,6 +13,17 @@ MonoBehaviour:
   m_Name: Street 2
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog
+  animalDetails: 'BREED: ASKAL
+
+    AGE: Adult
+
+    CONDITION: Dirty
+
+    BEHAVIOR:
+    Playful
+
+    DIET: Clean Water & Soft Food'
+  missionDescription: 'DESCRIPTION: '
   spawnPosition: {x: 115.3, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   debrisLocations:
