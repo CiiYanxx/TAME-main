@@ -1,21 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System;
 
 public class QuestCard : MonoBehaviour
 {
+    [Header("UI Objects")]
+    public GameObject acceptButtonObj;    
+    public GameObject successImageObj;    
+    public GameObject timerButtonObj;     
+    public TextMeshProUGUI timerText;     
+
+    [Header("Display Info")]
     public Image animalIcon;
     public TextMeshProUGUI titleText;
-    
-    [Header("Button Settings")]
-    public Button acceptBtn; 
-    public Image buttonImage; // I-drag dito ang Image component ng Accept Button
-    public TextMeshProUGUI buttonText; // I-drag dito ang Text child ng Button
-
-    [Header("Sprites")]
-    public Sprite successSprite;
-    public Sprite defaultSprite;
 
     private QuestInfo currentInfo;
     private NPC currentNpc;
@@ -30,16 +27,16 @@ public class QuestCard : MonoBehaviour
         if (titleText != null) titleText.text = info.questTitle; 
         if (animalIcon != null) animalIcon.sprite = info.animalIcon;
 
-        RefreshUI();
-
-        if (acceptBtn != null)
+        Button btn = acceptButtonObj.GetComponent<Button>();
+        if (btn != null)
         {
-            acceptBtn.onClick.RemoveAllListeners();
-            acceptBtn.onClick.AddListener(() => {
-                // STEP 2: Pag-click, bubuksan muna ang Preview Panel bago ang Dialog
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => {
                 DialogSystem.Instance.OpenMissionPreview(currentInfo, currentNpc);
             });
         }
+
+        RefreshUI();
     }
 
     void Update()
@@ -47,48 +44,75 @@ public class QuestCard : MonoBehaviour
         if (isCooldown)
         {
             cooldownTimer -= Time.deltaTime;
+            
+            if (timerText != null) 
+            {
+                // Smart Formatting: Tinatawag ang bagong logic natin sa baba
+                timerText.text = FormatTime(cooldownTimer);
+            }
+
             if (cooldownTimer <= 0)
             {
                 isCooldown = false;
-                RefreshUI();
+                RefreshUI(); 
             }
-            else
-            {
-                // I-update ang countdown text sa button
-                buttonText.text = Mathf.Ceil(cooldownTimer).ToString() + "s";
-            }
+        }
+    }
+
+    // --- SMART FORMATTING LOGIC ---
+    private string FormatTime(float timeInSeconds)
+    {
+        int minutes = Mathf.FloorToInt(timeInSeconds / 60);
+        int seconds = Mathf.FloorToInt(timeInSeconds % 60);
+
+        if (minutes > 0)
+        {
+            // Kapag 1 minute pataas, ipakita ang "1m 30s"
+            return string.Format("{0}m {1:00}s", minutes, seconds);
+        }
+        else
+        {
+            // Kapag seconds na lang, ipakita ang "30s" (wala na yung 0m)
+            return string.Format("{0}s", seconds);
         }
     }
 
     public void RefreshUI()
     {
-        // I-check kung tapos na ang mission (Success)
         bool isFinished = PlayerPrefs.GetInt("Mission_" + currentInfo.targetAnimalName, 0) == 1;
+
+        acceptButtonObj.SetActive(false);
+        successImageObj.SetActive(false);
+        timerButtonObj.SetActive(false);
 
         if (isFinished)
         {
-            buttonImage.sprite = successSprite;
-            acceptBtn.interactable = false;
-            buttonText.text = "FINISHED";
+            successImageObj.SetActive(true);
         }
         else if (isCooldown)
         {
-            acceptBtn.interactable = false;
-            // Ang text ay ina-update sa Update() function
+            timerButtonObj.SetActive(true);
+            
+            Image timerImg = timerButtonObj.GetComponent<Image>();
+            if (timerImg != null)
+            {
+                // Solid grayish color (0.85 alpha)
+                timerImg.color = new Color(0.3f, 0.3f, 0.3f, 0.85f);
+            }
+
+            Button timerBtn = timerButtonObj.GetComponent<Button>();
+            if (timerBtn != null) timerBtn.interactable = false;
         }
         else
         {
-            buttonImage.sprite = defaultSprite;
-            acceptBtn.interactable = true;
-            buttonText.text = "RESCUE";
+            acceptButtonObj.SetActive(true);
         }
     }
 
-    // Tawagin ito mula sa mission logic mo pag nag-fail
     public void StartCooldown(float seconds)
     {
         cooldownTimer = seconds;
         isCooldown = true;
-        acceptBtn.interactable = false;
+        RefreshUI();
     }
 }
