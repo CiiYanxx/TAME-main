@@ -1,158 +1,178 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 using ithappy.Animals_FREE;
 
 public class AnimalMissionLogic : MonoBehaviour
 {
-    public enum MissionStep { BuildTrust, Feeding, Eating, FinishedEating, Minigame }
+    public enum MissionStep { Waiting, BuildTrust, Feeding, Eating, FinishedEating }
     [Header("Mission Status")]
-    public MissionStep currentStep = MissionStep.BuildTrust;
+    public MissionStep currentStep = MissionStep.Waiting;
 
-    [Header("Distance Settings")]
+    [Header("Natural Roaming Settings")]
+    public float wanderRadius = 6f;
+    [Range(0.1f, 10f)]
+    public float rotationSpeed = 3.5f; 
+    [Range(0.1f, 2f)]
+    public float walkSpeed = 0.35f;    
     public float stopDistance = 1.2f; 
 
-    [HideInInspector] public Button cleanButton; // Placeholder to avoid controller errors
-    [HideInInspector] public Button feedButton;
-    [HideInInspector] public Button interactButton; 
-    
+    private Vector3 currentTarget;
+    private Vector3 spawnPoint;
+
     private GameObject spawnedFoodBowl;
     private QuestInfo missionData;
     private AnimalInteractable animalInteract;
     private CreatureMover animalMover; 
-    private float trustLevel = 0f;
+    private float meterValue = 0.5f; // Nagsisimula sa gitna (0.5)
     private Transform playerTransform;
-    private LineRenderer circleRenderer;
+    private bool missionStarted = false;
 
     public void SetupMission(QuestInfo info)
     {
         missionData = info;
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
-        playerTransform = PlayerMovement.Instance.transform;
         
-        if (animalInteract != null) {
-            animalInteract.SetupQuest(info); 
-            animalInteract.enabled = false;
-        }
+        // Hanapin ang player
+        if (PlayerMovement.Instance != null) playerTransform = PlayerMovement.Instance.transform;
+        else playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
 
-        // Setup the Visual Radius Line
-        SetupCircleRenderer();
+        spawnPoint = transform.position; 
 
+        if (animalInteract != null) animalInteract.SetupQuest(info); 
+
+        // Setup Feed Button
         if (RescueController.Instance.feedButton != null) {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
             RescueController.Instance.feedButton.onClick.RemoveAllListeners();
             RescueController.Instance.feedButton.onClick.AddListener(OnFeedButtonPressed);
         }
 
-        currentStep = MissionStep.BuildTrust;
-    }
-
-    private void SetupCircleRenderer()
-    {
-        circleRenderer = gameObject.AddComponent<LineRenderer>();
-        circleRenderer.useWorldSpace = false;
-        circleRenderer.loop = true;
-        circleRenderer.positionCount = 51;
-        circleRenderer.startWidth = 0.04f; // Manipis na linya
-        circleRenderer.endWidth = 0.04f;
-        circleRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        circleRenderer.startColor = new Color(1f, 0.92f, 0.016f, 0.4f); // Yellow half-transparent
-        circleRenderer.endColor = new Color(1f, 0.92f, 0.016f, 0.4f);
-
-        float angle = 0f;
-        for (int i = 0; i < 51; i++)
-        {
-            float x = Mathf.Sin(Mathf.Deg2Rad * angle) * missionData.detectionRadius;
-            float z = Mathf.Cos(Mathf.Deg2Rad * angle) * missionData.detectionRadius;
-            circleRenderer.SetPosition(i, new Vector3(x, 0.05f, z)); // Konting taas para di lubog
-            angle += 360f / 50;
-        }
+        PickNewTarget();
+        meterValue = 0.5f; 
+        currentStep = MissionStep.Waiting;
+        missionStarted = true;
     }
 
     void Update() 
     { 
-        if (currentStep == MissionStep.BuildTrust) HandleTrustLogic(); 
-    }
+        if (!missionStarted || missionData == null || playerTransform == null) return;
 
-    private void HandleTrustLogic()
-    {
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
-        // Ang Noise Meter ay lilitaw lang pag nasa loob ng radius line
-        if (distance <= missionData.detectionRadius)
+        if (currentStep == MissionStep.Waiting)
         {
-            if (PlayerMovement.Instance.isRunning) trustLevel -= Time.deltaTime * 0.4f;
-            else if (PlayerMovement.Instance.isSneaking) trustLevel += Time.deltaTime * missionData.trustDifficulty;
+            HandleNaturalRoam();
 
-            trustLevel = Mathf.Clamp01(trustLevel);
-            RescueController.Instance.UpdateTrustUI(trustLevel, true);
-        }
-        else 
-        {
-            RescueController.Instance.UpdateTrustUI(trustLevel, false);
-        }
+            // LOGIC: Pag nasa loob ng Safe Zone (detectionRadius)
+            if (distance <= missionData.detectionRadius) 
+            {
+                // Lumalapit = Taas (papuntang 1.0), Lumalayo = Baba (papuntang 0.1)
+                float proximity = 1f - (distance / missionData.detectionRadius);
+                meterValue = Mathf.Lerp(meterValue, Mathf.Clamp(proximity, 0.1f, 1f), Time.deltaTime * 5f);
+            }
+            else
+            {
+                // LOGIC: Pag lumabas sa Safe Zone (Penalty Drain mula sa current value)
+                meterValue -= Time.deltaTime * missionData.drainSpeed;
 
-        if (trustLevel >= 0.95f && distance <= 3.5f) {
-            if (RescueController.Instance.feedButton != null && !RescueController.Instance.feedButton.gameObject.activeSelf) {
-                RescueController.Instance.feedButton.gameObject.SetActive(true);
-                RescueController.Instance.UpdateTrustUI(trustLevel, false);
-                if (circleRenderer != null) circleRenderer.enabled = false; // Hide pag panalo na
+                if (meterValue <= 0)
+                {
+                    meterValue = 0;
+                    missionStarted = false;
+                    RescueController.Instance.ReportMissionOutcome(false);
+                    return;
+                }
+            }
+
+            // Update UI sa RescueController
+            Color stateColor = (meterValue < 0.3f) ? Color.red : (meterValue > 0.7f ? Color.green : Color.yellow);
+            RescueController.Instance.UpdateNoiseMeter(true, stateColor, meterValue);
+            
+            // Transition kapag puno na ang meter at malapit na ang player
+            if (meterValue >= 0.95f && distance <= 3f)
+            {
+                currentStep = MissionStep.BuildTrust;
+                TransitionToFeeding();
             }
         }
     }
 
+    private void HandleNaturalRoam()
+    {
+        if (animalMover == null) return;
+        if (Vector3.Distance(transform.position, currentTarget) < 1.2f) PickNewTarget();
+
+        Vector3 direction = (currentTarget - transform.position).normalized;
+        if (direction != Vector3.zero)
+        {
+            direction.y = 0; 
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        }
+        animalMover.SetInput(new Vector2(0, walkSpeed), currentTarget, false, false);
+    }
+
+    private void PickNewTarget()
+    {
+        Vector2 randomPoint = Random.insideUnitCircle * wanderRadius;
+        currentTarget = spawnPoint + new Vector3(randomPoint.x, 0, randomPoint.y);
+    }
+
+    private void TransitionToFeeding()
+    {
+        currentStep = MissionStep.Feeding;
+        if (RescueController.Instance.sneakButton != null) RescueController.Instance.sneakButton.SetActive(false);
+        if (RescueController.Instance.feedButton != null) RescueController.Instance.feedButton.gameObject.SetActive(true);
+    }
+
     public void OnFeedButtonPressed() {
-        if (currentStep == MissionStep.BuildTrust && trustLevel >= 0.9f) {
+        if (currentStep == MissionStep.Feeding) {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
-            currentStep = MissionStep.Feeding;
             StartCoroutine(PerformFeedingSequence());
         }
     }
 
-    // Original functions kept to avoid errors
-    public void OnPlayerInteract() { }
-    public void UpdateDebrisDetection(DebrisItem d, bool b) { }
-    public void OnCleanButtonPressed() { }
-
     IEnumerator PerformFeedingSequence()
     {
-        Animator playerAnim = PlayerMovement.Instance.GetComponent<Animator>();
+        Animator playerAnim = playerTransform.GetComponent<Animator>();
         if (playerAnim != null) playerAnim.SetTrigger("Interact");
         yield return new WaitForSeconds(0.8f); 
 
-        Transform playerT = PlayerMovement.Instance.transform;
-        Vector3 spawnPos = playerT.position + (playerT.forward * RescueController.Instance.foodForwardOffset);
+        Vector3 spawnPos = playerTransform.position + (playerTransform.forward * RescueController.Instance.foodForwardOffset);
         spawnPos.y += RescueController.Instance.foodVerticalOffset;
 
-        spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, playerT.rotation);
+        spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, playerTransform.rotation);
         RescueController.Instance.AddGravity(spawnedFoodBowl);
         if (animalInteract != null) animalInteract.SetFoodBowlReference(spawnedFoodBowl);
 
-        yield return new WaitForSeconds(2.0f); 
+        yield return new WaitForSeconds(1.5f); 
         currentStep = MissionStep.Eating; 
         yield return StartCoroutine(AnimalWalkToFood(spawnPos));
 
         currentStep = MissionStep.FinishedEating;
-        if (animalInteract != null) animalInteract.enabled = true;
         if (PointerController.Instance != null) PointerController.Instance.ShowTamePrompt(animalInteract);
     }
 
     IEnumerator AnimalWalkToFood(Vector3 targetPos)
     {
         if (animalMover == null) yield break;
-        Vector3 stopPos = targetPos; 
-        stopPos.y = transform.position.y;
-        float currentDistance = Vector3.Distance(transform.position, stopPos);
-        while (currentDistance > stopDistance)
-        {
-            currentDistance = Vector3.Distance(transform.position, stopPos);
-            float speedScale = Mathf.Clamp01((currentDistance - (stopDistance * 0.5f)) / stopDistance);
+        Vector3 stopPos = new Vector3(targetPos.x, transform.position.y, targetPos.z);
+        while (Vector3.Distance(transform.position, stopPos) > stopDistance) {
+            float speedScale = Mathf.Clamp01(Vector3.Distance(transform.position, stopPos) / 2f);
             animalMover.SetInput(new Vector2(0, 1 * speedScale), stopPos, false, false);
             yield return null;
         }
-        animalMover.SetInput(Vector2.zero, transform.position + transform.forward, false, false);
-        yield return new WaitForSeconds(2.5f); 
+        animalMover.SetInput(Vector2.zero, transform.position, false, false);
     }
+
+    // ITO YUNG NAWALA: Function para sa PlayerInteraction.cs
+    public void OnPlayerInteract() 
+    { 
+        Debug.Log("Player interacted with " + gameObject.name); 
+    }
+
+    public void UpdateDebrisDetection(DebrisItem d, bool b) { }
+
+    public float GetTrustPercentage() { return meterValue; }
 }

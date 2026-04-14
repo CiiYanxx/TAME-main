@@ -17,9 +17,9 @@ public class PlayerMovement : MonoBehaviour
     public GameObject mainCanvas;
 
     [Header("Sneak Settings")]
-    public bool isSneaking = false; // Check kung naka-sneak
-    public float sneakSpeed = 2.0f; // Bilis kapag naka-sneak
-    public bool isRunning = false;  // Detection para sa takot ng hayop
+    public bool isSneaking = false; 
+    public float sneakSpeed = 2.0f; 
+    public bool isRunning = false;  
 
     [Header("Bus Cinematic Settings")]
     public GameObject busPrefab;
@@ -58,6 +58,7 @@ public class PlayerMovement : MonoBehaviour
         anim = GetComponent<Animator>();
         Application.targetFrameRate = 60;
 
+        // I-hide muna ang UI at Player sa simula
         if (mainCanvas != null) mainCanvas.SetActive(false);
         TogglePlayerVisuals(false);
 
@@ -73,23 +74,31 @@ public class PlayerMovement : MonoBehaviour
         StartCoroutine(InitializeGameFlow());
     }
 
-    // --- SNEAK FUNCTION: Ikabit ito sa UI Button ---
+    // --- SNEAK FUNCTION ---
     public void ToggleSneak()
     {
         isSneaking = !isSneaking;
-        if(anim != null) anim.SetBool("isCrouching", isSneaking); // Siguraduhin na may 'isCrouching' bool sa Animator
+        if(anim != null) anim.SetBool("isCrouching", isSneaking); 
     }
 
     IEnumerator InitializeGameFlow()
     {
+        // 1. Check natin kung gusto talaga ng user ng New Game
         bool isNewGame = PlayerPrefs.GetInt("IsNewGame", 0) == 1;
 
+        // 2. Kung may save file at HINDI New Game ang pinili
         if (SaveSystem.HasSave() && !isNewGame)
         {
             LoadPlayerPosition();
-            SkipIntroCinematic();
+            ResetCameraToDefault();
+            FinishIntro();
             yield break; 
         }
+
+        // 3. Kung New Game o walang save, dito papasok:
+        // I-reset natin ang IsNewGame sa 0 para sa susunod na resume/restart
+        PlayerPrefs.SetInt("IsNewGame", 0);
+        PlayerPrefs.Save();
 
         if (controller != null) controller.enabled = false;
         transform.position = defaultSpawnPosition;
@@ -154,6 +163,7 @@ public class PlayerMovement : MonoBehaviour
             StopCoroutine(cinematicCoroutine);
             cinematicCoroutine = null;
         }
+        ResetCameraToDefault();
         FinishIntro();
     }
 
@@ -162,10 +172,16 @@ public class PlayerMovement : MonoBehaviour
         TogglePlayerVisuals(true); 
         canControl = true;
         if (mainCanvas != null) mainCanvas.SetActive(true);
+    }
 
-        Quaternion orbitRot = Quaternion.Euler(cameraPitch, cameraYaw, 0);
-        playerCamera.transform.position = cameraOrbitTarget.position + (orbitRot * Vector3.back * defaultDistance);
-        playerCamera.transform.rotation = orbitRot;
+    private void ResetCameraToDefault()
+    {
+        if (playerCamera != null && cameraOrbitTarget != null)
+        {
+            Quaternion orbitRot = Quaternion.Euler(cameraPitch, cameraYaw, 0);
+            playerCamera.transform.position = cameraOrbitTarget.position + (orbitRot * Vector3.back * defaultDistance);
+            playerCamera.transform.rotation = orbitRot;
+        }
     }
 
     private void DoAutoSave()
@@ -184,18 +200,6 @@ public class PlayerMovement : MonoBehaviour
     void OnApplicationPause(bool pause) { if (pause && canControl) DoAutoSave(); }
     void OnApplicationQuit() { if (canControl) DoAutoSave(); }
 
-    private void OnTriggerEnter(Collider other) { CheckDebris(other, true); }
-    private void OnTriggerStay(Collider other) { CheckDebris(other, true); }
-    private void OnTriggerExit(Collider other) { CheckDebris(other, false); }
-
-    private void CheckDebris(Collider other, bool state)
-    {
-        DebrisItem debris = other.GetComponent<DebrisItem>();
-        if (debris != null) {
-            AnimalMissionLogic mission = UnityEngine.Object.FindAnyObjectByType<AnimalMissionLogic>();
-            if (mission != null) mission.UpdateDebrisDetection(debris, state);
-        }
-    }
 
     void Update() 
     { 
@@ -237,10 +241,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 camR = Vector3.Scale(playerCamera.transform.right, new Vector3(1, 0, 1)).normalized;
         Vector3 moveDir = (camF * input.y) + (camR * input.x);
 
-        // --- DITO NATIN BINAGO ANG SPEED BASE SA SNEAK ---
         float currentSpeed = isSneaking ? sneakSpeed : moveSpeed;
-        
-        // Detection para sa takot ng hayop: Kung mabilis ang joystick at HINDI naka-sneak
         isRunning = (input.magnitude > 0.7f && !isSneaking);
 
         Vector3 finalMove = moveDir * currentSpeed; 

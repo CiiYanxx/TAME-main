@@ -1,90 +1,119 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class RescueController : MonoBehaviour
 {
     public static RescueController Instance { get; private set; }
-    
-    [Header("UI References")]
-    public Slider trustSlider; 
+
+    [Header("Noise Meter UI")]
+    public GameObject noiseMeterGroup; // Background/Parent ng meter
+    public Image noiseMeterFill;       // Meter Line (Image Component, Filled, Vertical)
+    public GameObject sneakButton;
     public Button feedButton;
-    public Button interactButton; 
-    public GameObject sneakButton; // I-drag dito ang Sneak Button UI object
 
-    [Header("Settings")]
+    [Header("Settings & Prefabs")]
     public List<GameObject> animalPrefabs = new List<GameObject>();
-
-    [Header("Mobile Spawn Adjustments")]
+    
+    // Eto yung nawalang variables kaya ka nag-eerror:
     public float foodForwardOffset = 1.5f;   
     public float foodVerticalOffset = 0.1f;  
     
-    private GameObject currentSpawnedAnimal = null;
-    private NPC activeQuestGiver = null;
-    private QuestInfo currentQuestInfo = null;
+    private GameObject currentAnimal = null;
+    private NPC activeNPC = null;
+    private QuestInfo currentInfo = null;
+    private AnimalMissionLogic activeMissionLogic;
 
-    private void Awake() {
-        if (Instance == null) Instance = this;
+    void Awake() 
+    { 
+        if (Instance == null) Instance = this; 
         else Destroy(gameObject);
 
-        if (trustSlider != null) trustSlider.gameObject.SetActive(false);
-        if (feedButton != null) feedButton.gameObject.SetActive(false);
-        if (sneakButton != null) sneakButton.SetActive(false); // Hide sa simula
+        CleanupMission(); 
     }
 
-    public void StartMission(NPC questGiver, QuestInfo info) {
+    public void StartMission(NPC npc, QuestInfo info) 
+    {
         CleanupMission();
-        activeQuestGiver = questGiver;
-        currentQuestInfo = info; 
+        activeNPC = npc;
+        currentInfo = info;
 
-        // Ipakita ang sneak button dahil nagsimula na ang mission
         if (sneakButton != null) sneakButton.SetActive(true);
 
-        string targetName = info.targetAnimalName.ToLower().Trim();
-        GameObject prefab = animalPrefabs.Find(p => p.name.ToLower().Trim() == targetName);
-
+        // Hanapin ang prefab base sa pangalan
+        GameObject prefab = animalPrefabs.Find(p => p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim());
+        
         if (prefab != null) {
-            currentSpawnedAnimal = Instantiate(prefab, info.spawnPosition, Quaternion.Euler(info.animalRotation));
-            AnimalMissionLogic logic = currentSpawnedAnimal.GetComponent<AnimalMissionLogic>();
-            if (logic != null) logic.SetupMission(info);
+            currentAnimal = Instantiate(prefab, info.spawnPosition, Quaternion.Euler(info.animalRotation));
+            
+            // Setup ang mga logic components sa na-spawn na hayop
+            activeMissionLogic = currentAnimal.GetComponent<AnimalMissionLogic>();
+            if (activeMissionLogic == null) activeMissionLogic = currentAnimal.AddComponent<AnimalMissionLogic>();
+            
+            activeMissionLogic.SetupMission(info);
+            
+            // Setup ang interactable visual circle
+            AnimalInteractable interactable = currentAnimal.GetComponent<AnimalInteractable>();
+            if (interactable != null) interactable.SetupQuest(info);
         }
     }
 
-    public void UpdateTrustUI(float value, bool isVisible) {
-        if (trustSlider != null) {
-            if(trustSlider.gameObject.activeSelf != isVisible) trustSlider.gameObject.SetActive(isVisible);
-            trustSlider.value = value;
-        }
-    }
-
-    public void ReportMissionOutcome(bool success) {
-        if (success && currentQuestInfo != null) {
-            if (RescuePointsHandler.Instance != null) 
-                RescuePointsHandler.Instance.AddPoints(currentQuestInfo.progressPointsReward);
-        }
+    // UpdateNoiseMeter na tumatanggap ng fillValue (0 to 1)
+    public void UpdateNoiseMeter(bool isVisible, Color stateColor, float fillValue) 
+    {
+        if (noiseMeterGroup == null || noiseMeterFill == null) return;
         
-        if (activeQuestGiver != null) activeQuestGiver.ReportQuestOutcome(success);
-        
-        CleanupMission(); // Dito rin itatago ang sneak button
-    }
-
-    public void AddGravity(GameObject obj) {
-        Rigidbody rb = obj.GetComponent<Rigidbody>() ?? obj.AddComponent<Rigidbody>();
-        if (rb != null) {
-            rb.useGravity = true;
-            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            rb.constraints = RigidbodyConstraints.FreezeRotation;
+        if (noiseMeterGroup.activeSelf != isVisible) {
+            noiseMeterGroup.SetActive(isVisible);
         }
-        if (obj.GetComponent<Collider>() == null) obj.AddComponent<BoxCollider>();
+
+        if (!isVisible) return;
+
+        // Image fill control para sa Vertical movement
+        noiseMeterFill.fillAmount = fillValue;
+        noiseMeterFill.color = stateColor;
     }
 
-    public void CleanupMission() {
-        if (trustSlider != null) trustSlider.gameObject.SetActive(false);
+    public void ReportMissionOutcome(bool success) 
+    {
+        if (success && currentInfo != null) {
+            RescuePointsHandler.Instance?.AddPoints(currentInfo.progressPointsReward);
+        }
+
+        if (activeNPC != null) activeNPC.ReportQuestOutcome(success);
+
+        if (noiseMeterGroup != null) noiseMeterGroup.SetActive(false);
+        if (sneakButton != null) sneakButton.SetActive(false);
         if (feedButton != null) feedButton.gameObject.SetActive(false);
-        if (sneakButton != null) sneakButton.SetActive(false); // Itago ang sneak button
 
-        if (currentSpawnedAnimal != null) Destroy(currentSpawnedAnimal);
-        currentSpawnedAnimal = null;
-        currentQuestInfo = null; 
+        StartCoroutine(CleanupAfterDelay());
+    }
+
+    IEnumerator CleanupAfterDelay()
+    {
+        yield return new WaitForSeconds(2f);
+        CleanupMission();
+    }
+
+    public void CleanupMission() 
+    {
+        if (noiseMeterGroup != null) noiseMeterGroup.SetActive(false);
+        if (sneakButton != null) sneakButton.SetActive(false);
+        if (feedButton != null) feedButton.gameObject.SetActive(false);
+        
+        if (noiseMeterFill != null) noiseMeterFill.fillAmount = 0;
+
+        if (currentAnimal != null) Destroy(currentAnimal);
+
+        currentAnimal = null;
+        activeMissionLogic = null;
+    }
+
+    public void AddGravity(GameObject obj) 
+    {
+        Rigidbody rb = obj.GetComponent<Rigidbody>() ?? obj.AddComponent<Rigidbody>();
+        rb.useGravity = true;
+        if (obj.GetComponent<Collider>() == null) obj.AddComponent<BoxCollider>();
     }
 }
