@@ -21,6 +21,8 @@ public class QuestInfo : ScriptableObject {
     [Header("Distance & Detection")]
     [Tooltip("Safe Zone Radius. Pag lumabas ka rito, babagsak ang meter.")]
     public float detectionRadius = 10.0f;
+    [Tooltip("Distance where animal flees if NOT sneaking.")]
+    public float fleeRadius = 12.0f; 
     [Tooltip("Gaano kabilis bumagsak ang meter pag lumabas sa radius.")]
     public float drainSpeed = 0.2f;
 

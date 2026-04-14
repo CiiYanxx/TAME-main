@@ -5,27 +5,26 @@ using ithappy.Animals_FREE;
 public class AnimalMissionLogic : MonoBehaviour
 {
     public enum MissionStep { Waiting, BuildTrust, Feeding, Eating, FinishedEating }
+
     [Header("Mission Status")]
     public MissionStep currentStep = MissionStep.Waiting;
 
     [Header("Natural Roaming Settings")]
     public float wanderRadius = 6f;
-    [Range(0.1f, 10f)]
-    public float rotationSpeed = 3.5f; 
-    [Range(0.1f, 2f)]
-    public float walkSpeed = 0.35f;    
-    public float stopDistance = 1.2f; 
+    [Range(0.1f, 10f)] public float rotationSpeed = 5f; 
+    [Range(0.1f, 2f)] public float walkSpeed = 0.35f;    
+    public float stopDistance = 0.8f; 
 
     private Vector3 currentTarget;
     private Vector3 spawnPoint;
-
     private GameObject spawnedFoodBowl;
     private QuestInfo missionData;
     private AnimalInteractable animalInteract;
     private CreatureMover animalMover; 
-    private float meterValue = 0.5f; // Nagsisimula sa gitna (0.5)
+    private float meterValue = 0.5f; 
     private Transform playerTransform;
     private bool missionStarted = false;
+    private bool hasTouchedRadius = false;
 
     public void SetupMission(QuestInfo info)
     {
@@ -33,7 +32,6 @@ public class AnimalMissionLogic : MonoBehaviour
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
         
-        // Hanapin ang player
         if (PlayerMovement.Instance != null) playerTransform = PlayerMovement.Instance.transform;
         else playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
 
@@ -41,8 +39,8 @@ public class AnimalMissionLogic : MonoBehaviour
 
         if (animalInteract != null) animalInteract.SetupQuest(info); 
 
-        // Setup Feed Button
-        if (RescueController.Instance.feedButton != null) {
+        if (RescueController.Instance.feedButton != null) 
+        {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
             RescueController.Instance.feedButton.onClick.RemoveAllListeners();
             RescueController.Instance.feedButton.onClick.AddListener(OnFeedButtonPressed);
@@ -52,6 +50,13 @@ public class AnimalMissionLogic : MonoBehaviour
         meterValue = 0.5f; 
         currentStep = MissionStep.Waiting;
         missionStarted = true;
+        hasTouchedRadius = false;
+    }
+
+    public void OnPlayerInteract()
+    {
+        if (currentStep == MissionStep.Feeding) 
+            OnFeedButtonPressed();
     }
 
     void Update() 
@@ -60,56 +65,105 @@ public class AnimalMissionLogic : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
-        if (currentStep == MissionStep.Waiting)
+        if (currentStep == MissionStep.Waiting || currentStep == MissionStep.BuildTrust)
         {
-            HandleNaturalRoam();
-
-            // LOGIC: Pag nasa loob ng Safe Zone (detectionRadius)
-            if (distance <= missionData.detectionRadius) 
+            if (distance <= 10f && PlayerMovement.Instance.isSneaking)
             {
-                // Lumalapit = Taas (papuntang 1.0), Lumalayo = Baba (papuntang 0.1)
-                float proximity = 1f - (distance / missionData.detectionRadius);
-                meterValue = Mathf.Lerp(meterValue, Mathf.Clamp(proximity, 0.1f, 1f), Time.deltaTime * 5f);
+                hasTouchedRadius = true;
+                currentStep = MissionStep.BuildTrust;
+
+                LookAtPlayer();
+
+                if (animalMover != null) 
+                    animalMover.SetInput(Vector2.zero, transform.position, false, false);
+
+                float rawProximity = Mathf.InverseLerp(10f, 5f, distance);
+                float targetValue = Mathf.Lerp(0.5f, 1.0f, rawProximity);
+
+                meterValue = Mathf.MoveTowards(meterValue, targetValue, Time.deltaTime * 2f);
             }
             else
             {
-                // LOGIC: Pag lumabas sa Safe Zone (Penalty Drain mula sa current value)
-                meterValue -= Time.deltaTime * missionData.drainSpeed;
+                HandleNaturalRoam(); 
 
-                if (meterValue <= 0)
+                if (hasTouchedRadius)
                 {
-                    meterValue = 0;
-                    missionStarted = false;
-                    RescueController.Instance.ReportMissionOutcome(false);
-                    return;
+                    meterValue -= Time.deltaTime * missionData.drainSpeed;
+
+                    if (meterValue <= 0)
+                    {
+                        HandleFleeSequence();
+                        return;
+                    }
                 }
             }
 
-            // Update UI sa RescueController
-            Color stateColor = (meterValue < 0.3f) ? Color.red : (meterValue > 0.7f ? Color.green : Color.yellow);
-            RescueController.Instance.UpdateNoiseMeter(true, stateColor, meterValue);
-            
-            // Transition kapag puno na ang meter at malapit na ang player
-            if (meterValue >= 0.95f && distance <= 3f)
+            if (distance <= 4f && !PlayerMovement.Instance.isSneaking)
             {
-                currentStep = MissionStep.BuildTrust;
-                TransitionToFeeding();
+                HandleFleeSequence();
+                return;
             }
+
+            if (hasTouchedRadius)
+            {
+                Color stateColor = Color.yellow;
+                if (meterValue < 0.35f) stateColor = Color.red;
+                else if (meterValue >= 1.0f) stateColor = Color.green;
+
+                RescueController.Instance.UpdateNoiseMeter(true, stateColor, meterValue);
+            }
+
+            if (meterValue >= 1.0f && distance <= 5.5f) 
+            {
+                currentStep = MissionStep.Feeding;
+                StartCoroutine(TransitionToFeedingSequence());
+            }
+        }
+    }
+
+    private void HandleFleeSequence()
+    {
+        missionStarted = false;
+
+        CleanupFoodBowl(); // 🔥 FAIL CLEANUP
+
+        if (PlayerMovement.Instance != null && PlayerMovement.Instance.isSneaking)
+        {
+            PlayerMovement.Instance.ToggleSneak();
+        }
+
+        if (animalInteract != null) 
+            animalInteract.ReportMissionOutcome(false);
+    }
+
+    private void LookAtPlayer()
+    {
+        Vector3 direction = (playerTransform.position - transform.position).normalized;
+        direction.y = 0;
+
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed);
         }
     }
 
     private void HandleNaturalRoam()
     {
         if (animalMover == null) return;
-        if (Vector3.Distance(transform.position, currentTarget) < 1.2f) PickNewTarget();
+
+        if (Vector3.Distance(transform.position, currentTarget) < 1.2f) 
+            PickNewTarget();
 
         Vector3 direction = (currentTarget - transform.position).normalized;
+
         if (direction != Vector3.zero)
         {
             direction.y = 0; 
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
+
         animalMover.SetInput(new Vector2(0, walkSpeed), currentTarget, false, false);
     }
 
@@ -119,15 +173,28 @@ public class AnimalMissionLogic : MonoBehaviour
         currentTarget = spawnPoint + new Vector3(randomPoint.x, 0, randomPoint.y);
     }
 
-    private void TransitionToFeeding()
+    IEnumerator TransitionToFeedingSequence()
     {
-        currentStep = MissionStep.Feeding;
-        if (RescueController.Instance.sneakButton != null) RescueController.Instance.sneakButton.SetActive(false);
-        if (RescueController.Instance.feedButton != null) RescueController.Instance.feedButton.gameObject.SetActive(true);
+        RescueController.Instance.UpdateNoiseMeter(false, Color.green, 1f);
+
+        if (PlayerMovement.Instance != null && PlayerMovement.Instance.isSneaking)
+        {
+            PlayerMovement.Instance.ToggleSneak();
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        if (RescueController.Instance.sneakButton != null) 
+            RescueController.Instance.sneakButton.SetActive(false);
+
+        if (RescueController.Instance.feedButton != null) 
+            RescueController.Instance.feedButton.gameObject.SetActive(true);
     }
 
-    public void OnFeedButtonPressed() {
-        if (currentStep == MissionStep.Feeding) {
+    public void OnFeedButtonPressed() 
+    {
+        if (currentStep == MissionStep.Feeding) 
+        {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
             StartCoroutine(PerformFeedingSequence());
         }
@@ -137,42 +204,69 @@ public class AnimalMissionLogic : MonoBehaviour
     {
         Animator playerAnim = playerTransform.GetComponent<Animator>();
         if (playerAnim != null) playerAnim.SetTrigger("Interact");
+
         yield return new WaitForSeconds(0.8f); 
 
-        Vector3 spawnPos = playerTransform.position + (playerTransform.forward * RescueController.Instance.foodForwardOffset);
-        spawnPos.y += RescueController.Instance.foodVerticalOffset;
+        Vector3 forwardPos = playerTransform.position + (playerTransform.forward * 1.5f);
+        Vector3 spawnPos = forwardPos + Vector3.up * 0.3f;
 
-        spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, playerTransform.rotation);
-        RescueController.Instance.AddGravity(spawnedFoodBowl);
-        if (animalInteract != null) animalInteract.SetFoodBowlReference(spawnedFoodBowl);
+        RaycastHit hit;
+        if (Physics.Raycast(forwardPos + Vector3.up, Vector3.down, out hit, 5f))
+        {
+            spawnPos = hit.point + Vector3.up * 0.2f;
+        }
 
-        yield return new WaitForSeconds(1.5f); 
-        currentStep = MissionStep.Eating; 
-        yield return StartCoroutine(AnimalWalkToFood(spawnPos));
+        spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, Quaternion.identity);
+
+        Rigidbody rb = spawnedFoodBowl.GetComponent<Rigidbody>();
+        if (rb == null) rb = spawnedFoodBowl.AddComponent<Rigidbody>();
+
+        if (animalInteract != null) 
+            animalInteract.SetFoodBowlReference(spawnedFoodBowl);
+
+        yield return new WaitForSeconds(1.2f);
+
+        currentStep = MissionStep.Eating;
+
+        yield return StartCoroutine(AnimalWalkToFood(spawnedFoodBowl.transform.position));
+
+        animalMover.SetInput(Vector2.zero, transform.position, false, false);
+
+        yield return new WaitForSeconds(2.5f);
+
+        CleanupFoodBowl(); // 🔥 SUCCESS CLEANUP
 
         currentStep = MissionStep.FinishedEating;
-        if (PointerController.Instance != null) PointerController.Instance.ShowTamePrompt(animalInteract);
+
+        if (PointerController.Instance != null) 
+            PointerController.Instance.ShowTamePrompt(animalInteract);
     }
 
     IEnumerator AnimalWalkToFood(Vector3 targetPos)
     {
         if (animalMover == null) yield break;
+
         Vector3 stopPos = new Vector3(targetPos.x, transform.position.y, targetPos.z);
-        while (Vector3.Distance(transform.position, stopPos) > stopDistance) {
+        float timeout = 0;
+
+        while (Vector3.Distance(transform.position, stopPos) > stopDistance && timeout < 7f) 
+        {
             float speedScale = Mathf.Clamp01(Vector3.Distance(transform.position, stopPos) / 2f);
-            animalMover.SetInput(new Vector2(0, 1 * speedScale), stopPos, false, false);
+            animalMover.SetInput(new Vector2(0, 1.2f * speedScale), stopPos, false, false);
+            timeout += Time.deltaTime;
             yield return null;
         }
+
         animalMover.SetInput(Vector2.zero, transform.position, false, false);
     }
 
-    // ITO YUNG NAWALA: Function para sa PlayerInteraction.cs
-    public void OnPlayerInteract() 
-    { 
-        Debug.Log("Player interacted with " + gameObject.name); 
+    // 🔥 SINGLE CLEANUP FUNCTION (IMPORTANT)
+    private void CleanupFoodBowl()
+    {
+        if (spawnedFoodBowl != null)
+        {
+            Destroy(spawnedFoodBowl);
+            spawnedFoodBowl = null;
+        }
     }
-
-    public void UpdateDebrisDetection(DebrisItem d, bool b) { }
-
-    public float GetTrustPercentage() { return meterValue; }
 }

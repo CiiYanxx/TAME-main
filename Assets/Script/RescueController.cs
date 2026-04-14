@@ -16,7 +16,6 @@ public class RescueController : MonoBehaviour
     [Header("Settings & Prefabs")]
     public List<GameObject> animalPrefabs = new List<GameObject>();
     
-    // Eto yung nawalang variables kaya ka nag-eerror:
     public float foodForwardOffset = 1.5f;   
     public float foodVerticalOffset = 0.1f;  
     
@@ -39,27 +38,24 @@ public class RescueController : MonoBehaviour
         activeNPC = npc;
         currentInfo = info;
 
+        // Flow Step 1: Show sneak button at the start
         if (sneakButton != null) sneakButton.SetActive(true);
 
-        // Hanapin ang prefab base sa pangalan
         GameObject prefab = animalPrefabs.Find(p => p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim());
         
         if (prefab != null) {
             currentAnimal = Instantiate(prefab, info.spawnPosition, Quaternion.Euler(info.animalRotation));
             
-            // Setup ang mga logic components sa na-spawn na hayop
             activeMissionLogic = currentAnimal.GetComponent<AnimalMissionLogic>();
             if (activeMissionLogic == null) activeMissionLogic = currentAnimal.AddComponent<AnimalMissionLogic>();
             
             activeMissionLogic.SetupMission(info);
             
-            // Setup ang interactable visual circle
             AnimalInteractable interactable = currentAnimal.GetComponent<AnimalInteractable>();
             if (interactable != null) interactable.SetupQuest(info);
         }
     }
 
-    // UpdateNoiseMeter na tumatanggap ng fillValue (0 to 1)
     public void UpdateNoiseMeter(bool isVisible, Color stateColor, float fillValue) 
     {
         if (noiseMeterGroup == null || noiseMeterFill == null) return;
@@ -70,7 +66,7 @@ public class RescueController : MonoBehaviour
 
         if (!isVisible) return;
 
-        // Image fill control para sa Vertical movement
+        // Eto yung magpapagalaw sa line (Image Type: Filled, Method: Vertical)
         noiseMeterFill.fillAmount = fillValue;
         noiseMeterFill.color = stateColor;
     }
@@ -78,7 +74,9 @@ public class RescueController : MonoBehaviour
     public void ReportMissionOutcome(bool success) 
     {
         if (success && currentInfo != null) {
-            RescuePointsHandler.Instance?.AddPoints(currentInfo.progressPointsReward);
+            // Check points handler safely
+            var points = FindFirstObjectByType<RescuePointsHandler>();
+            if(points != null) points.AddPoints(currentInfo.progressPointsReward);
         }
 
         if (activeNPC != null) activeNPC.ReportQuestOutcome(success);
