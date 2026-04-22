@@ -219,7 +219,7 @@ public class AnimalInteractable : MonoBehaviour
             Vector3 runDir =
                 (transform.position - PlayerMovement.Instance.transform.position).normalized;
 
-            Vector3 target = transform.position + (runDir * 20f);
+            Vector3 target = transform.position + (runDir * 40f);
 
             float t = 0f;
 

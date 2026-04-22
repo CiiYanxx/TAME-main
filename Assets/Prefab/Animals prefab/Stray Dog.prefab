@@ -1245,7 +1245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentQuest: {fileID: 11400000, guid: dc6d66d0f1b0f1741950fe67bacd951e, type: 2}
   runAwaySpeed: 1
-  runAwayDuration: 5
+  runAwayDuration: 10
   angryEmotePrefab: {fileID: 2227482790409148838, guid: 1e9bc09f79e6ea34087b5ddb72697bf5, type: 3}
   sneakEnterPrefab: {fileID: 2652593992426441465, guid: a47ab2dc37d247e44873529fef5e90a2, type: 3}
   fullTrustPrefab: {fileID: 5279986873564025463, guid: e737512adce0f2047b2608176ae38c78, type: 3}
