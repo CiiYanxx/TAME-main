@@ -7,27 +7,37 @@ public class AnimalInteractable : MonoBehaviour
     public QuestInfo currentQuest;
     public float runAwaySpeed = 1.2f;
     public float runAwayDuration = 3.5f;
+
     public GameObject angryEmotePrefab;
+    public GameObject sneakEnterPrefab;   // 🆕 NEW
+    public GameObject fullTrustPrefab;    // 🆕 NEW
+
     public Vector3 emoteOffset = new Vector3(0f, 1.8f, 0f);
 
     [Header("Circle Visual Settings")]
     public float circleYOffset = 0.1f;
     public float circleWidth = 0.15f;
 
-    public Color neutralColor = new Color(1f, 0.92f, 0.016f, 0.5f); // yellow
-    public Color alertColor = new Color(1f, 0f, 0f, 0.5f);         // red
-    public Color trustColor = new Color(0f, 1f, 0f, 0.5f);         // green
+    public Color neutralColor = new Color(1f, 0.92f, 0.016f, 0.5f);
+    public Color alertColor = new Color(1f, 0f, 0f, 0.5f);
+    public Color trustColor = new Color(0f, 1f, 0f, 0.5f);
 
     private LineRenderer circleRenderer;
     private GameObject activeFoodBowl;
     private AnimalMissionLogic missionLogic;
     private bool isFailing = false;
 
+    private bool sneakTriggered = false;   // 🆕 prevents spam
+    private bool fullTrustTriggered = false;
+
     public void SetupQuest(QuestInfo info)
     {
         currentQuest = info;
         missionLogic = GetComponent<AnimalMissionLogic>();
         SetupCircleRenderer();
+
+        sneakTriggered = false;
+        fullTrustTriggered = false;
     }
 
     private void SetupCircleRenderer()
@@ -64,19 +74,39 @@ public class AnimalInteractable : MonoBehaviour
 
         bool inside = distance <= currentQuest.detectionRadius;
 
+        // 🆕 1. SNEAK ENTER RADIUS EVENT
+        if (inside && PlayerMovement.Instance.isSneaking && !sneakTriggered)
+        {
+            sneakTriggered = true;
+
+            if (sneakEnterPrefab != null)
+            {
+                Instantiate(
+                    sneakEnterPrefab,
+                    transform.position + emoteOffset,
+                    Quaternion.identity,
+                    transform
+                );
+            }
+        }
+
+        // reset kapag lumabas
+        if (!inside)
+            sneakTriggered = false;
+
         if (missionLogic.currentStep == AnimalMissionLogic.MissionStep.Waiting ||
             missionLogic.currentStep == AnimalMissionLogic.MissionStep.BuildTrust)
         {
             Color circleColor = neutralColor;
 
-            // 🔴 FAIL (running inside radius)
+            // 🔴 FAIL
             if (inside && !PlayerMovement.Instance.isSneaking)
             {
                 ReportMissionOutcome(false);
                 return;
             }
 
-            // 🟢 TRUST (smooth scaling)
+            // 🟢 TRUST
             if (inside && PlayerMovement.Instance.isSneaking)
             {
                 float max = currentQuest.detectionRadius;
@@ -91,6 +121,24 @@ public class AnimalInteractable : MonoBehaviour
         else
         {
             HideCircle();
+        }
+
+        // 🆕 2. FULL TRUST EVENT (100%)
+        if (missionLogic != null &&
+            missionLogic.currentStep == AnimalMissionLogic.MissionStep.Feeding &&
+            !fullTrustTriggered)
+        {
+            fullTrustTriggered = true;
+
+            if (fullTrustPrefab != null)
+            {
+                Instantiate(
+                    fullTrustPrefab,
+                    transform.position + emoteOffset,
+                    Quaternion.identity,
+                    transform
+                );
+            }
         }
     }
 
