@@ -4,15 +4,25 @@ using ithappy.Animals_FREE;
 
 public class AnimalInteractable : MonoBehaviour
 {
+    [Header("Quest")]
     public QuestInfo currentQuest;
+
+    [Header("Run Away Settings")]
     public float runAwaySpeed = 1.2f;
     public float runAwayDuration = 3.5f;
+    public float runAwayDistance = 40f;
 
+    [Header("Emote Prefabs")]
     public GameObject angryEmotePrefab;
     public GameObject sneakEnterPrefab;
     public GameObject fullTrustPrefab;
 
+    [Header("Emote Position")]
     public Vector3 emoteOffset = new Vector3(0f, 1.8f, 0f);
+
+    [Header("Emote Rotation Animation")]
+    public bool rotateEmote360 = true;
+    public float emoteRotateSpeed = 180f; // degrees per second
 
     [Header("Circle Visual Settings")]
     public float circleYOffset = 0.1f;
@@ -25,24 +35,24 @@ public class AnimalInteractable : MonoBehaviour
     private LineRenderer circleRenderer;
     private GameObject activeFoodBowl;
     private AnimalMissionLogic missionLogic;
-    private bool isFailing = false;
 
+    private bool isFailing = false;
     private bool sneakTriggered = false;
     private bool fullTrustTriggered = false;
 
-    // 🔥 ACTIVE EMOTE REFERENCE (IMPORTANT FIX)
     private GameObject activeEmote;
 
     public void SetupQuest(QuestInfo info)
     {
         currentQuest = info;
         missionLogic = GetComponent<AnimalMissionLogic>();
+
         SetupCircleRenderer();
 
+        isFailing = false;
         sneakTriggered = false;
         fullTrustTriggered = false;
 
-        // cleanup previous emote if reused
         if (activeEmote != null)
             Destroy(activeEmote);
     }
@@ -69,7 +79,6 @@ public class AnimalInteractable : MonoBehaviour
         activeFoodBowl = bowl;
     }
 
-    // 🔥 EMOTE SWITCH SYSTEM (CORE FIX)
     private void SwitchEmote(GameObject prefab)
     {
         if (activeEmote != null)
@@ -88,6 +97,8 @@ public class AnimalInteractable : MonoBehaviour
 
     void Update()
     {
+        RotateActiveEmote();
+
         if (isFailing || currentQuest == null || missionLogic == null || PlayerMovement.Instance == null)
             return;
 
@@ -98,33 +109,32 @@ public class AnimalInteractable : MonoBehaviour
 
         bool inside = distance <= currentQuest.detectionRadius;
 
-        // 🟡 SNEAK ENTER EVENT
+        // Sneak enter emote
         if (inside && PlayerMovement.Instance.isSneaking && !sneakTriggered)
         {
             sneakTriggered = true;
 
             if (sneakEnterPrefab != null && !fullTrustTriggered)
-            {
                 SwitchEmote(sneakEnterPrefab);
-            }
         }
 
         if (!inside)
             sneakTriggered = false;
 
+        // Detection circle states
         if (missionLogic.currentStep == AnimalMissionLogic.MissionStep.Waiting ||
             missionLogic.currentStep == AnimalMissionLogic.MissionStep.BuildTrust)
         {
             Color circleColor = neutralColor;
 
-            // 🔴 FAIL CONDITION
+            // Fail if player enters not sneaking
             if (inside && !PlayerMovement.Instance.isSneaking)
             {
                 ReportMissionOutcome(false);
                 return;
             }
 
-            // 🟢 TRUST BUILDING
+            // Trust color transition
             if (inside && PlayerMovement.Instance.isSneaking)
             {
                 float max = currentQuest.detectionRadius;
@@ -141,13 +151,25 @@ public class AnimalInteractable : MonoBehaviour
             HideCircle();
         }
 
-        // 🟢 FULL TRUST (100% / FEEDING STATE)
+        // Full trust emote
         if (missionLogic.currentStep == AnimalMissionLogic.MissionStep.Feeding &&
             !fullTrustTriggered)
         {
             fullTrustTriggered = true;
             SwitchEmote(fullTrustPrefab);
         }
+    }
+
+    private void RotateActiveEmote()
+    {
+        if (activeEmote == null) return;
+        if (!rotateEmote360) return;
+
+        activeEmote.transform.Rotate(
+            Vector3.up,
+            emoteRotateSpeed * Time.deltaTime,
+            Space.Self
+        );
     }
 
     private void DrawCircle(float radius, Color color)
@@ -165,8 +187,10 @@ public class AnimalInteractable : MonoBehaviour
             float x = transform.position.x + Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
             float z = transform.position.z + Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
 
-            circleRenderer.SetPosition(i,
-                new Vector3(x, transform.position.y + circleYOffset, z));
+            circleRenderer.SetPosition(
+                i,
+                new Vector3(x, transform.position.y + circleYOffset, z)
+            );
         }
     }
 
@@ -219,7 +243,7 @@ public class AnimalInteractable : MonoBehaviour
             Vector3 runDir =
                 (transform.position - PlayerMovement.Instance.transform.position).normalized;
 
-            Vector3 target = transform.position + (runDir * 40f);
+            Vector3 target = transform.position + (runDir * runAwayDistance);
 
             float t = 0f;
 

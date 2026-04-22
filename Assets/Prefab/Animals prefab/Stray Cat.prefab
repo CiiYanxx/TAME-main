@@ -1595,7 +1595,7 @@ MonoBehaviour:
   angryEmotePrefab: {fileID: 7784855428409063967, guid: 7a65fccc748c844448a8a09253bbf13e, type: 3}
   sneakEnterPrefab: {fileID: 6072265264087915113, guid: deb364f88d7bf9140a2f11e7799dcdce, type: 3}
   fullTrustPrefab: {fileID: 4929996842402110343, guid: c29900dc3d262294a956fa641d6a53b0, type: 3}
-  emoteOffset: {x: 1, y: 1.8, z: 0}
+  emoteOffset: {x: 0, y: 1.5, z: 0}
   circleYOffset: 0.1
   circleWidth: 0.05
   neutralColor: {r: 1, g: 0.92, b: 0.016, a: 0.5}
