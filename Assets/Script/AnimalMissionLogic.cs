@@ -16,14 +16,11 @@ public class AnimalMissionLogic : MonoBehaviour
     public float stopDistance = 0.8f;
 
     [Header("Taming Fine Tuning")]
-    [Tooltip("Kapag ganitong kalapit habang sneaking = auto 100% trust")]
     public float fullTrustOverrideDistance = 1.5f;
 
-    [Tooltip("Mas mababa = mas kailangan lumapit bago mapuno meter")]
     [Range(0.05f, 0.5f)]
     public float innerTrustRadiusMultiplier = 0.25f;
 
-    [Tooltip("Distance para lumabas feed button pagka full trust")]
     public float trustBufferDistance = 2f;
 
     private Vector3 currentTarget;
@@ -38,6 +35,8 @@ public class AnimalMissionLogic : MonoBehaviour
     private Transform playerTransform;
     private bool missionStarted = false;
     private bool hasTouchedRadius = false;
+
+    private bool feedingTriggered = false; // 🔥 IMPORTANT FIX
 
     public void SetupMission(QuestInfo info)
     {
@@ -68,6 +67,7 @@ public class AnimalMissionLogic : MonoBehaviour
         currentStep = MissionStep.Waiting;
         missionStarted = true;
         hasTouchedRadius = false;
+        feedingTriggered = false;
     }
 
     public void OnPlayerInteract()
@@ -86,7 +86,6 @@ public class AnimalMissionLogic : MonoBehaviour
 
         if (currentStep == MissionStep.Waiting || currentStep == MissionStep.BuildTrust)
         {
-            // FAIL kapag tumakbo nang sobrang lapit
             if (distance <= radius * 0.4f && !PlayerMovement.Instance.isSneaking)
             {
                 HandleFleeSequence();
@@ -103,7 +102,6 @@ public class AnimalMissionLogic : MonoBehaviour
                 if (animalMover != null)
                     animalMover.SetInput(Vector2.zero, transform.position, false, false);
 
-                // AUTO FULL TRUST kapag sobrang lapit
                 if (distance <= fullTrustOverrideDistance)
                 {
                     meterValue = 1f;
@@ -141,31 +139,25 @@ public class AnimalMissionLogic : MonoBehaviour
                 }
             }
 
-            // UI Meter
             if (hasTouchedRadius)
             {
                 Color stateColor;
 
                 if (meterValue < 0.35f)
-                {
                     stateColor = Color.red;
-                }
                 else
                 {
                     float t = Mathf.InverseLerp(0.35f, 1f, meterValue);
                     stateColor = Color.Lerp(Color.yellow, Color.green, t);
                 }
 
-                RescueController.Instance.UpdateNoiseMeter(
-                    true,
-                    stateColor,
-                    meterValue
-                );
+                RescueController.Instance.UpdateNoiseMeter(true, stateColor, meterValue);
             }
 
-            // FULL TRUST + malapit enough = feeding
-            if (meterValue >= 1f && distance <= trustBufferDistance)
+            // ❌ FIXED: REMOVED DISTANCE REQUIREMENT
+            if (meterValue >= 1f && !feedingTriggered)
             {
+                feedingTriggered = true;
                 currentStep = MissionStep.Feeding;
                 StartCoroutine(TransitionToFeedingSequence());
             }
@@ -178,11 +170,8 @@ public class AnimalMissionLogic : MonoBehaviour
 
         CleanupFoodBowl();
 
-        if (PlayerMovement.Instance != null &&
-            PlayerMovement.Instance.isSneaking)
-        {
+        if (PlayerMovement.Instance != null && PlayerMovement.Instance.isSneaking)
             PlayerMovement.Instance.ToggleSneak();
-        }
 
         if (animalInteract != null)
             animalInteract.ReportMissionOutcome(false);
@@ -190,9 +179,7 @@ public class AnimalMissionLogic : MonoBehaviour
 
     private void LookAtPlayer()
     {
-        Vector3 direction =
-            (playerTransform.position - transform.position).normalized;
-
+        Vector3 direction = (playerTransform.position - transform.position).normalized;
         direction.y = 0f;
 
         if (direction != Vector3.zero)
@@ -215,13 +202,11 @@ public class AnimalMissionLogic : MonoBehaviour
             PickNewTarget();
 
         Vector3 direction = (currentTarget - transform.position).normalized;
+        direction.y = 0f;
 
         if (direction != Vector3.zero)
         {
-            direction.y = 0f;
-
-            Quaternion targetRotation =
-                Quaternion.LookRotation(direction);
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
 
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
@@ -230,32 +215,21 @@ public class AnimalMissionLogic : MonoBehaviour
             );
         }
 
-        animalMover.SetInput(
-            new Vector2(0, walkSpeed),
-            currentTarget,
-            false,
-            false
-        );
+        animalMover.SetInput(new Vector2(0, walkSpeed), currentTarget, false, false);
     }
 
     private void PickNewTarget()
     {
-        Vector2 randomPoint =
-            Random.insideUnitCircle * wanderRadius;
-
-        currentTarget =
-            spawnPoint + new Vector3(randomPoint.x, 0, randomPoint.y);
+        Vector2 randomPoint = Random.insideUnitCircle * wanderRadius;
+        currentTarget = spawnPoint + new Vector3(randomPoint.x, 0, randomPoint.y);
     }
 
     IEnumerator TransitionToFeedingSequence()
     {
         RescueController.Instance.UpdateNoiseMeter(false, Color.green, 1f);
 
-        if (PlayerMovement.Instance != null &&
-            PlayerMovement.Instance.isSneaking)
-        {
+        if (PlayerMovement.Instance != null && PlayerMovement.Instance.isSneaking)
             PlayerMovement.Instance.ToggleSneak();
-        }
 
         yield return new WaitForSeconds(0.5f);
 
@@ -277,41 +251,24 @@ public class AnimalMissionLogic : MonoBehaviour
 
     IEnumerator PerformFeedingSequence()
     {
-        Animator playerAnim =
-            playerTransform.GetComponent<Animator>();
+        Animator playerAnim = playerTransform.GetComponent<Animator>();
 
         if (playerAnim != null)
             playerAnim.SetTrigger("Interact");
 
         yield return new WaitForSeconds(0.8f);
 
-        Vector3 forwardPos =
-            playerTransform.position +
-            (playerTransform.forward * 1.5f);
-
-        Vector3 spawnPos =
-            forwardPos + Vector3.up * 0.3f;
+        Vector3 forwardPos = playerTransform.position + (playerTransform.forward * 1.5f);
+        Vector3 spawnPos = forwardPos + Vector3.up * 0.3f;
 
         RaycastHit hit;
 
-        if (Physics.Raycast(
-            forwardPos + Vector3.up,
-            Vector3.down,
-            out hit,
-            5f))
-        {
+        if (Physics.Raycast(forwardPos + Vector3.up, Vector3.down, out hit, 5f))
             spawnPos = hit.point + Vector3.up * 0.2f;
-        }
 
-        spawnedFoodBowl = Instantiate(
-            missionData.foodBowlPrefab,
-            spawnPos,
-            Quaternion.identity
-        );
+        spawnedFoodBowl = Instantiate(missionData.foodBowlPrefab, spawnPos, Quaternion.identity);
 
-        Rigidbody rb =
-            spawnedFoodBowl.GetComponent<Rigidbody>();
-
+        Rigidbody rb = spawnedFoodBowl.GetComponent<Rigidbody>();
         if (rb == null)
             rb = spawnedFoodBowl.AddComponent<Rigidbody>();
 
@@ -322,16 +279,9 @@ public class AnimalMissionLogic : MonoBehaviour
 
         currentStep = MissionStep.Eating;
 
-        yield return StartCoroutine(
-            AnimalWalkToFood(spawnedFoodBowl.transform.position)
-        );
+        yield return StartCoroutine(AnimalWalkToFood(spawnedFoodBowl.transform.position));
 
-        animalMover.SetInput(
-            Vector2.zero,
-            transform.position,
-            false,
-            false
-        );
+        animalMover.SetInput(Vector2.zero, transform.position, false, false);
 
         yield return new WaitForSeconds(2.5f);
 
@@ -347,36 +297,21 @@ public class AnimalMissionLogic : MonoBehaviour
     {
         if (animalMover == null) yield break;
 
-        Vector3 stopPos =
-            new Vector3(targetPos.x, transform.position.y, targetPos.z);
+        Vector3 stopPos = new Vector3(targetPos.x, transform.position.y, targetPos.z);
 
         float timeout = 0f;
 
-        while (Vector3.Distance(transform.position, stopPos) > stopDistance &&
-               timeout < 7f)
+        while (Vector3.Distance(transform.position, stopPos) > stopDistance && timeout < 7f)
         {
-            float speedScale =
-                Mathf.Clamp01(
-                    Vector3.Distance(transform.position, stopPos) / 2f
-                );
+            float speedScale = Mathf.Clamp01(Vector3.Distance(transform.position, stopPos) / 2f);
 
-            animalMover.SetInput(
-                new Vector2(0, 1.2f * speedScale),
-                stopPos,
-                false,
-                false
-            );
+            animalMover.SetInput(new Vector2(0, 1.2f * speedScale), stopPos, false, false);
 
             timeout += Time.deltaTime;
             yield return null;
         }
 
-        animalMover.SetInput(
-            Vector2.zero,
-            transform.position,
-            false,
-            false
-        );
+        animalMover.SetInput(Vector2.zero, transform.position, false, false);
     }
 
     private void CleanupFoodBowl()

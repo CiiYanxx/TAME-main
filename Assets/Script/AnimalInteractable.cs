@@ -9,8 +9,8 @@ public class AnimalInteractable : MonoBehaviour
     public float runAwayDuration = 3.5f;
 
     public GameObject angryEmotePrefab;
-    public GameObject sneakEnterPrefab;   // 🆕 NEW
-    public GameObject fullTrustPrefab;    // 🆕 NEW
+    public GameObject sneakEnterPrefab;
+    public GameObject fullTrustPrefab;
 
     public Vector3 emoteOffset = new Vector3(0f, 1.8f, 0f);
 
@@ -27,8 +27,11 @@ public class AnimalInteractable : MonoBehaviour
     private AnimalMissionLogic missionLogic;
     private bool isFailing = false;
 
-    private bool sneakTriggered = false;   // 🆕 prevents spam
+    private bool sneakTriggered = false;
     private bool fullTrustTriggered = false;
+
+    // 🔥 ACTIVE EMOTE REFERENCE (IMPORTANT FIX)
+    private GameObject activeEmote;
 
     public void SetupQuest(QuestInfo info)
     {
@@ -38,6 +41,10 @@ public class AnimalInteractable : MonoBehaviour
 
         sneakTriggered = false;
         fullTrustTriggered = false;
+
+        // cleanup previous emote if reused
+        if (activeEmote != null)
+            Destroy(activeEmote);
     }
 
     private void SetupCircleRenderer()
@@ -62,6 +69,23 @@ public class AnimalInteractable : MonoBehaviour
         activeFoodBowl = bowl;
     }
 
+    // 🔥 EMOTE SWITCH SYSTEM (CORE FIX)
+    private void SwitchEmote(GameObject prefab)
+    {
+        if (activeEmote != null)
+            Destroy(activeEmote);
+
+        if (prefab != null)
+        {
+            activeEmote = Instantiate(
+                prefab,
+                transform.position + emoteOffset,
+                Quaternion.identity,
+                transform
+            );
+        }
+    }
+
     void Update()
     {
         if (isFailing || currentQuest == null || missionLogic == null || PlayerMovement.Instance == null)
@@ -74,23 +98,17 @@ public class AnimalInteractable : MonoBehaviour
 
         bool inside = distance <= currentQuest.detectionRadius;
 
-        // 🆕 1. SNEAK ENTER RADIUS EVENT
+        // 🟡 SNEAK ENTER EVENT
         if (inside && PlayerMovement.Instance.isSneaking && !sneakTriggered)
         {
             sneakTriggered = true;
 
-            if (sneakEnterPrefab != null)
+            if (sneakEnterPrefab != null && !fullTrustTriggered)
             {
-                Instantiate(
-                    sneakEnterPrefab,
-                    transform.position + emoteOffset,
-                    Quaternion.identity,
-                    transform
-                );
+                SwitchEmote(sneakEnterPrefab);
             }
         }
 
-        // reset kapag lumabas
         if (!inside)
             sneakTriggered = false;
 
@@ -99,14 +117,14 @@ public class AnimalInteractable : MonoBehaviour
         {
             Color circleColor = neutralColor;
 
-            // 🔴 FAIL
+            // 🔴 FAIL CONDITION
             if (inside && !PlayerMovement.Instance.isSneaking)
             {
                 ReportMissionOutcome(false);
                 return;
             }
 
-            // 🟢 TRUST
+            // 🟢 TRUST BUILDING
             if (inside && PlayerMovement.Instance.isSneaking)
             {
                 float max = currentQuest.detectionRadius;
@@ -123,22 +141,12 @@ public class AnimalInteractable : MonoBehaviour
             HideCircle();
         }
 
-        // 🆕 2. FULL TRUST EVENT (100%)
-        if (missionLogic != null &&
-            missionLogic.currentStep == AnimalMissionLogic.MissionStep.Feeding &&
+        // 🟢 FULL TRUST (100% / FEEDING STATE)
+        if (missionLogic.currentStep == AnimalMissionLogic.MissionStep.Feeding &&
             !fullTrustTriggered)
         {
             fullTrustTriggered = true;
-
-            if (fullTrustPrefab != null)
-            {
-                Instantiate(
-                    fullTrustPrefab,
-                    transform.position + emoteOffset,
-                    Quaternion.identity,
-                    transform
-                );
-            }
+            SwitchEmote(fullTrustPrefab);
         }
     }
 
@@ -179,14 +187,7 @@ public class AnimalInteractable : MonoBehaviour
         if (!success)
         {
             if (angryEmotePrefab != null)
-            {
-                Instantiate(
-                    angryEmotePrefab,
-                    transform.position + emoteOffset,
-                    Quaternion.identity,
-                    transform
-                );
-            }
+                SwitchEmote(angryEmotePrefab);
 
             RescueController.Instance.UpdateNoiseMeter(false, Color.white, 0f);
             RescueController.Instance.ReportMissionOutcome(false);
@@ -197,6 +198,9 @@ public class AnimalInteractable : MonoBehaviour
         {
             if (activeFoodBowl != null)
                 Destroy(activeFoodBowl);
+
+            if (activeEmote != null)
+                Destroy(activeEmote);
 
             RescueController.Instance.ReportMissionOutcome(true);
             Destroy(gameObject);
@@ -235,6 +239,9 @@ public class AnimalInteractable : MonoBehaviour
 
         if (activeFoodBowl != null)
             Destroy(activeFoodBowl);
+
+        if (activeEmote != null)
+            Destroy(activeEmote);
 
         Destroy(gameObject);
     }
