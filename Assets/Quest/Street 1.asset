@@ -23,13 +23,13 @@ MonoBehaviour:
   spawnPosition: {x: 207.91, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
-  fleeRadius: 11
-  drainSpeed: 0.2
+  drainSpeed: 1
   foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
   questTitle: Rescue a Stray Cat
   locationIndex: 0
   missionIndex: 0
-  progressPointsReward: 10
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
   requiredSuccesses: 5
   maxFailures: 3
   pointerSpeed: 300
