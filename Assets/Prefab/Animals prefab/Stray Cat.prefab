@@ -1590,12 +1590,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentQuest: {fileID: 11400000, guid: 47a3e396c89ed1744901c1cccb751b8d, type: 2}
-  runAwaySpeed: 1
+  runAwaySpeed: 3
   runAwayDuration: 10
-  angryEmotePrefab: {fileID: 2227482790409148838, guid: 1e9bc09f79e6ea34087b5ddb72697bf5, type: 3}
-  sneakEnterPrefab: {fileID: 2652593992426441465, guid: a47ab2dc37d247e44873529fef5e90a2, type: 3}
-  fullTrustPrefab: {fileID: 5279986873564025463, guid: e737512adce0f2047b2608176ae38c78, type: 3}
-  emoteOffset: {x: 0, y: 1.5, z: 0}
+  angryEmotePrefab: {fileID: 7784855428409063967, guid: 7a65fccc748c844448a8a09253bbf13e, type: 3}
+  sneakEnterPrefab: {fileID: 6072265264087915113, guid: deb364f88d7bf9140a2f11e7799dcdce, type: 3}
+  fullTrustPrefab: {fileID: 4929996842402110343, guid: c29900dc3d262294a956fa641d6a53b0, type: 3}
+  emoteOffset: {x: 1, y: 1.8, z: 0}
   circleYOffset: 0.1
   circleWidth: 0.05
   neutralColor: {r: 1, g: 0.92, b: 0.016, a: 0.5}
