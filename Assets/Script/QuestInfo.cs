@@ -1,29 +1,30 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewQuestData", menuName = "ScriptableObjects/QuestInfo")]
-public class QuestInfo : ScriptableObject {
+public class QuestInfo : ScriptableObject
+{
     [Header("Basic Animal Info")]
     public string targetAnimalName = "Stray Cat";
-    public Sprite animalIcon;        
-    public Sprite animalFullPreview; 
+    public Sprite animalIcon;
+    public Sprite animalFullPreview;
 
     [Header("Preview UI Content")]
-    [TextArea(3, 6)] 
-    public string animalDetails = "Breed: \nColor: \nStatus: "; 
-    [TextArea(5, 12)] 
-    public string missionDescription = "Enter mission story and hints here..."; 
+    [TextArea(3, 6)]
+    public string animalDetails = "Breed:\nColor:\nStatus:";
+
+    [TextArea(5, 12)]
+    public string missionDescription = "Enter mission story and hints here...";
 
     [Header("Spawn Settings")]
-    public GameObject animalPrefab; 
+    public GameObject animalPrefab;
     public Vector3 spawnPosition;
-    public Vector3 animalRotation; 
+    public Vector3 animalRotation;
 
     [Header("Distance & Detection")]
-    [Tooltip("Safe Zone Radius. Pag lumabas ka rito, babagsak ang meter.")]
-    public float detectionRadius = 10.0f;
-    [Tooltip("Distance where animal flees if NOT sneaking.")]
-    public float fleeRadius = 12.0f; 
-    [Tooltip("Gaano kabilis bumagsak ang meter pag lumabas sa radius.")]
+    [Tooltip("Main detection / trust radius")]
+    public float detectionRadius = 10f;
+
+    [Tooltip("Pag lumabas sa radius, ganito kabilis bumaba meter")]
     public float drainSpeed = 0.2f;
 
     [Header("Food & Feeding")]
@@ -31,7 +32,7 @@ public class QuestInfo : ScriptableObject {
 
     [Header("Progression Logic")]
     public string questTitle = "Rescue Mission";
-    public int locationIndex; 
+    public int locationIndex;
     public int missionIndex;
     public int progressPointsReward = 10;
     public string acceptAnswer = "Good luck!";

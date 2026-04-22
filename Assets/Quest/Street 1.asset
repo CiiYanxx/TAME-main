@@ -30,7 +30,6 @@ MonoBehaviour:
   locationIndex: 0
   missionIndex: 0
   progressPointsReward: 10
-  acceptAnswer: Fantastic! Find the animal and bring it back safely.
   requiredSuccesses: 5
   maxFailures: 3
   pointerSpeed: 300

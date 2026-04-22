@@ -1266,10 +1266,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentStep: 0
-  wanderRadius: 5
+  wanderRadius: 10
   rotationSpeed: 5
-  walkSpeed: 0.5
+  walkSpeed: 1
   stopDistance: 1
+  fullTrustOverrideDistance: 2
+  innerTrustRadiusMultiplier: 0.5
+  trustBufferDistance: 2
 --- !u!120 &3083244854627170579
 LineRenderer:
   serializedVersion: 2
