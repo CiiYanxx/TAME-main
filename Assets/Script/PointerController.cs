@@ -168,9 +168,9 @@ public class PointerController : MonoBehaviour
         if (outcomePanel == null) return;
         
         if (lastResultWasSuccess) 
-            outcomeText.text = "Congratulations!\nYou successfully Rescue the Stray animals!";
+            outcomeText.text = "Congratulations!\nYou successfully rescue the stray animal!";
         else 
-            outcomeText.text = "Oh no!\nYou failed to rescue the stray animals!";
+            outcomeText.text = "Oh no!\nYou scared away the stray animal!";
 
         outcomePanel.SetActive(true); 
         outcomeContinueBtn.onClick.RemoveAllListeners();
@@ -179,8 +179,8 @@ public class PointerController : MonoBehaviour
 
     private void ShowOutcomeSecondDialog() 
     { 
-        if (lastResultWasSuccess) outcomeText.text = "Go back to Dr. Kevin for new Rescue Mission";
-        else outcomeText.text = "Go back to Dr. Kevin to restart the Rescue Mission";
+        if (lastResultWasSuccess) outcomeText.text = "Go back to Dr. Kevin so he can assess the rescued animal and check their condition";
+        else outcomeText.text = "Go back to Dr. Kevin to restart the rescue mission";
 
         outcomeContinueBtn.onClick.RemoveAllListeners();
         outcomeContinueBtn.onClick.AddListener(CloseOutcomePanel);

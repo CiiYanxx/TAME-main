@@ -21,7 +21,8 @@ MonoBehaviour:
 
 
     HINT:
-    "West side of the Center near the big rock"'
+    "West side of the Animal Center near the big rock"'
+  missionHint: 'HINT: "West side of the Animal Center near the big rock"'
   animalPrefab: {fileID: 0}
   spawnPosition: {x: 115.3, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}

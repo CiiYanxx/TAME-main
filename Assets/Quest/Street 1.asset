@@ -18,7 +18,9 @@ MonoBehaviour:
   animalDetails: "BREED: Siamese (Puspin)\nAGE: Kitten\nCOLOR: Orange & White \nCONDITION:
     Weak & Hungry\nBEHAVIOR: Energetic but Frightened\nDIET: Clean Water & Soft Food"
   missionDescription: "DESCRIPTION: This kitten fell into a narrow drainage pipe
-    and is covered in filth. \n\nHINT: \"East side of the Center near the tree\""
+    and is covered in filth. \n\nHINT: \"East side of the Animal Center near the
+    tree\""
+  missionHint: 'HINT: "East side of the Animal Center near the tree"'
   animalPrefab: {fileID: 0}
   spawnPosition: {x: 207.91, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}

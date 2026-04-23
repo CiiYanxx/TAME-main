@@ -15,6 +15,10 @@ public class QuestInfo : ScriptableObject
     [TextArea(5, 12)]
     public string missionDescription = "Enter mission story and hints here...";
 
+    [Header("Hint")]
+    [TextArea(2, 4)]
+    public string missionHint = "Stay crouched and move slowly to avoid scaring the animal.";
+
     [Header("Spawn Settings")]
     public GameObject animalPrefab;
     public Vector3 spawnPosition;

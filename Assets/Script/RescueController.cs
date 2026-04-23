@@ -8,84 +8,181 @@ public class RescueController : MonoBehaviour
     public static RescueController Instance { get; private set; }
 
     [Header("Noise Meter UI")]
-    public GameObject noiseMeterGroup; // Background/Parent ng meter
-    public Image noiseMeterFill;       // Meter Line (Image Component, Filled, Vertical)
+    public GameObject noiseMeterGroup;
+    public Image noiseMeterFill;
     public GameObject sneakButton;
     public Button feedButton;
 
+    [Header("Fail Outcome Panel")]
+    public GameObject failPanel;
+    public TMPro.TextMeshProUGUI failText;
+    public Button failContinueBtn;
+
+    [Header("Hint UI")]
+    public GameObject hintPanel;
+    public TMPro.TextMeshProUGUI hintText;
+
     [Header("Settings & Prefabs")]
     public List<GameObject> animalPrefabs = new List<GameObject>();
-    
-    public float foodForwardOffset = 1.5f;   
-    public float foodVerticalOffset = 0.1f;  
-    
+
+    public float foodForwardOffset = 1.5f;
+    public float foodVerticalOffset = 0.1f;
+
     private GameObject currentAnimal = null;
     private NPC activeNPC = null;
     private QuestInfo currentInfo = null;
     private AnimalMissionLogic activeMissionLogic;
 
-    void Awake() 
-    { 
-        if (Instance == null) Instance = this; 
+    private bool lastMissionSuccess = false;
+
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        CleanupMission(); 
+        if (failPanel != null)
+            failPanel.SetActive(false);
+
+        CleanupMission();
     }
 
-    public void StartMission(NPC npc, QuestInfo info) 
+    public void StartMission(NPC npc, QuestInfo info)
     {
         CleanupMission();
+
         activeNPC = npc;
         currentInfo = info;
 
-        // Flow Step 1: Show sneak button at the start
-        if (sneakButton != null) sneakButton.SetActive(true);
+        if (sneakButton != null)
+            sneakButton.SetActive(true);
 
-        GameObject prefab = animalPrefabs.Find(p => p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim());
-        
-        if (prefab != null) {
-            currentAnimal = Instantiate(prefab, info.spawnPosition, Quaternion.Euler(info.animalRotation));
-            
+        GameObject prefab = animalPrefabs.Find(
+            p => p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim()
+        );
+
+        if (prefab != null)
+        {
+            currentAnimal = Instantiate(
+                prefab,
+                info.spawnPosition,
+                Quaternion.Euler(info.animalRotation)
+            );
+
             activeMissionLogic = currentAnimal.GetComponent<AnimalMissionLogic>();
-            if (activeMissionLogic == null) activeMissionLogic = currentAnimal.AddComponent<AnimalMissionLogic>();
-            
+
+            if (activeMissionLogic == null)
+                activeMissionLogic = currentAnimal.AddComponent<AnimalMissionLogic>();
+
             activeMissionLogic.SetupMission(info);
-            
-            AnimalInteractable interactable = currentAnimal.GetComponent<AnimalInteractable>();
-            if (interactable != null) interactable.SetupQuest(info);
+
+            AnimalInteractable interactable =
+                currentAnimal.GetComponent<AnimalInteractable>();
+
+            if (interactable != null)
+                interactable.SetupQuest(info);
         }
     }
 
-    public void UpdateNoiseMeter(bool isVisible, Color stateColor, float fillValue) 
+    public void UpdateNoiseMeter(bool isVisible, Color stateColor, float fillValue)
     {
-        if (noiseMeterGroup == null || noiseMeterFill == null) return;
-        
-        if (noiseMeterGroup.activeSelf != isVisible) {
+        if (noiseMeterGroup == null || noiseMeterFill == null)
+            return;
+
+        if (noiseMeterGroup.activeSelf != isVisible)
             noiseMeterGroup.SetActive(isVisible);
-        }
 
-        if (!isVisible) return;
+        if (!isVisible)
+            return;
 
-        // Eto yung magpapagalaw sa line (Image Type: Filled, Method: Vertical)
         noiseMeterFill.fillAmount = fillValue;
         noiseMeterFill.color = stateColor;
     }
 
-    public void ReportMissionOutcome(bool success) 
+    public void ShowHint(string hint)
     {
-        if (success && currentInfo != null) {
-            // Check points handler safely
+        if (hintPanel == null || hintText == null) return;
+
+        hintPanel.SetActive(true);
+        hintText.text = hint;
+    }
+
+    public void HideHint()
+    {
+        if (hintPanel == null) return;
+
+        hintPanel.SetActive(false);
+    }
+
+    public void ReportMissionOutcome(bool success)
+    {
+        lastMissionSuccess = success;
+
+        if (success && currentInfo != null)
+        {
             var points = FindFirstObjectByType<RescuePointsHandler>();
-            if(points != null) points.AddPoints(currentInfo.progressPointsReward);
+
+            if (points != null)
+                points.AddPoints(currentInfo.progressPointsReward);
         }
 
-        if (activeNPC != null) activeNPC.ReportQuestOutcome(success);
+        if (activeNPC != null)
+            activeNPC.ReportQuestOutcome(success);
 
-        if (noiseMeterGroup != null) noiseMeterGroup.SetActive(false);
-        if (sneakButton != null) sneakButton.SetActive(false);
-        if (feedButton != null) feedButton.gameObject.SetActive(false);
+        if (noiseMeterGroup != null)
+            noiseMeterGroup.SetActive(false);
+
+        if (sneakButton != null)
+            sneakButton.SetActive(false);
+
+        if (feedButton != null)
+            feedButton.gameObject.SetActive(false);
+
+        if (!success)
+        {
+            ShowFailDialog();
+        }
 
         StartCoroutine(CleanupAfterDelay());
+    }
+
+    void ShowFailDialog()
+    {
+        if (failPanel == null)
+            return;
+
+        failPanel.SetActive(true);
+
+        if (failText != null)
+            failText.text =
+                "Oh no!\nYou scared awaay the stray animal!";
+
+        if (failContinueBtn != null)
+        {
+            failContinueBtn.onClick.RemoveAllListeners();
+            failContinueBtn.onClick.AddListener(ShowFailSecondDialog);
+        }
+    }
+
+    void ShowFailSecondDialog()
+    {
+        if (failText != null)
+            failText.text =
+                "Go back to Dr. Kevin to restart the Rescue Mission";
+
+        if (failContinueBtn != null)
+        {
+            failContinueBtn.onClick.RemoveAllListeners();
+            failContinueBtn.onClick.AddListener(CloseFailDialog);
+        }
+    }
+
+    void CloseFailDialog()
+    {
+        if (failPanel != null)
+            failPanel.SetActive(false);
+
+        if (NPC.Instance != null)
+            NPC.Instance.SetMissionReturned(true, false);
     }
 
     IEnumerator CleanupAfterDelay()
@@ -94,24 +191,36 @@ public class RescueController : MonoBehaviour
         CleanupMission();
     }
 
-    public void CleanupMission() 
+    public void CleanupMission()
     {
-        if (noiseMeterGroup != null) noiseMeterGroup.SetActive(false);
-        if (sneakButton != null) sneakButton.SetActive(false);
-        if (feedButton != null) feedButton.gameObject.SetActive(false);
-        
-        if (noiseMeterFill != null) noiseMeterFill.fillAmount = 0;
+        if (noiseMeterGroup != null)
+            noiseMeterGroup.SetActive(false);
 
-        if (currentAnimal != null) Destroy(currentAnimal);
+        if (sneakButton != null)
+            sneakButton.SetActive(false);
+
+        if (feedButton != null)
+            feedButton.gameObject.SetActive(false);
+
+        if (noiseMeterFill != null)
+            noiseMeterFill.fillAmount = 0f;
+
+        if (currentAnimal != null)
+            Destroy(currentAnimal);
 
         currentAnimal = null;
         activeMissionLogic = null;
     }
 
-    public void AddGravity(GameObject obj) 
+    public void AddGravity(GameObject obj)
     {
-        Rigidbody rb = obj.GetComponent<Rigidbody>() ?? obj.AddComponent<Rigidbody>();
+        Rigidbody rb =
+            obj.GetComponent<Rigidbody>() ??
+            obj.AddComponent<Rigidbody>();
+
         rb.useGravity = true;
-        if (obj.GetComponent<Collider>() == null) obj.AddComponent<BoxCollider>();
+
+        if (obj.GetComponent<Collider>() == null)
+            obj.AddComponent<BoxCollider>();
     }
 }

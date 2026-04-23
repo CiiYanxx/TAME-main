@@ -36,6 +36,7 @@ public class AnimalMissionLogic : MonoBehaviour
     private bool missionStarted = false;
     private bool hasTouchedRadius = false;
 
+
     private bool feedingTriggered = false; // 🔥 IMPORTANT FIX
 
     public void SetupMission(QuestInfo info)
@@ -43,6 +44,11 @@ public class AnimalMissionLogic : MonoBehaviour
         missionData = info;
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
+
+        if (RescueController.Instance != null)
+        {
+            RescueController.Instance.ShowHint(info.missionHint);
+        }
 
         if (PlayerMovement.Instance != null)
             playerTransform = PlayerMovement.Instance.transform;
@@ -83,6 +89,21 @@ public class AnimalMissionLogic : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
         float radius = missionData.detectionRadius;
+
+        bool insideRadius = distance <= radius;
+
+        // ✅ ALWAYS control hint here (single source of truth)
+        if (RescueController.Instance != null)
+        {
+            if (insideRadius)
+            {
+                RescueController.Instance.HideHint();
+            }
+            else
+            {
+                RescueController.Instance.ShowHint(missionData.missionHint);
+            }
+        }
 
         if (currentStep == MissionStep.Waiting || currentStep == MissionStep.BuildTrust)
         {
@@ -175,8 +196,10 @@ public class AnimalMissionLogic : MonoBehaviour
 
         if (animalInteract != null)
             animalInteract.ReportMissionOutcome(false);
-    }
 
+        RescueController.Instance.ReportMissionOutcome(false);
+    }
+  
     private void LookAtPlayer()
     {
         Vector3 direction = (playerTransform.position - transform.position).normalized;
