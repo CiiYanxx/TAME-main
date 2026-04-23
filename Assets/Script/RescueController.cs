@@ -110,6 +110,8 @@ public class RescueController : MonoBehaviour
     {
         if (hintPanel == null) return;
 
+        if (!hintPanel.activeSelf) return;
+
         hintPanel.SetActive(false);
     }
 

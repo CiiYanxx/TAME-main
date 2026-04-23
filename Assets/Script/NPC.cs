@@ -157,6 +157,14 @@ public class NPC : MonoBehaviour
                 if (isTalkingWithPlayer) EndConversation();
             }
         }
+
+        if (sqrDist <= sqrLimit)
+        {
+            playerInRange = true;
+
+            if (TutorialController.Instance != null)
+                TutorialController.Instance.Tutorial2_Interact();
+        }
     }
 
     public void StartConversation()
@@ -308,10 +316,16 @@ public class NPC : MonoBehaviour
     public void EndConversation()
     {
         isTalkingWithPlayer = false;
-        if(PlayerMovement.Instance != null) PlayerMovement.Instance.canControl = true;
 
-        if (CameraSystem.Instance != null) CameraSystem.Instance.EnableConversationMode(false);
+        if(PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = true;
+
+        if (CameraSystem.Instance != null)
+            CameraSystem.Instance.EnableConversationMode(false);
 
         DialogSystem.Instance.CloseAllPanels();
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.ShowArrow(6);
     }
 }

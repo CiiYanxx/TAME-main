@@ -1,111 +1,151 @@
+using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
 public class TutorialController : MonoBehaviour
 {
     public static TutorialController Instance;
 
-    [Header("UI")]
-    public GameObject tutorialPanel;
-    public TextMeshProUGUI tutorialText;
-    public RectTransform arrow;
+    public GameObject overlay;
+    public GameObject[] panels; // 0=Joystick, 1=Swipe, 2=Interact, 3=Dialog, 4=Location, 5=Animal, 6=Arrow
 
-    [Header("Buttons")]
-    public Button continueButton;
-    public Button skipButton;
+    private const string TUTORIAL_KEY = "Tutorial_Completed";
 
-    private int stepIndex = 0;
-    private bool isTutorialActive = false;
-
-    private Transform targetUI;
-
-    private string prefsKey = "Tutorial_Skipped";
+    private int currentIndex = -1;
+    private bool[] stepTriggered;
+    private bool waitingForContinue = false;
+    private bool readyForNextStep = true;
 
     void Awake()
     {
         Instance = this;
 
-        tutorialPanel.SetActive(false);
-
-        continueButton.onClick.AddListener(NextStep);
-        skipButton.onClick.AddListener(SkipTutorial);
-    }
-
-    public void StartTutorial()
-    {
-        if (PlayerPrefs.GetInt(prefsKey, 0) == 1)
-            return; // skipped permanently
-
-        isTutorialActive = true;
-        stepIndex = 0;
-
-        tutorialPanel.SetActive(true);
-        Time.timeScale = 0f;
-
-        ShowStep();
-    }
-
-    void ShowStep()
-    {
-        switch (stepIndex)
+        if (PlayerPrefs.GetInt(TUTORIAL_KEY, 0) == 1)
         {
-            case 0:
-                tutorialText.text = "Hold Sneak button to approach animals slowly.";
-                targetUI = FindUI("SneakButton");
-                break;
-
-            case 1:
-                tutorialText.text = "Press Feed button when trust is full.";
-                targetUI = FindUI("FeedButton");
-                break;
-
-            case 2:
-                tutorialText.text = "Complete the mini-game to rescue the animal!";
-                targetUI = FindUI("TameButton");
-                break;
-
-            default:
-                EndTutorial();
-                return;
+            gameObject.SetActive(false);
+            return;
         }
 
-        MoveArrow();
+        stepTriggered = new bool[panels.Length];
+        HideAll();
     }
 
-    void MoveArrow()
+    void HideAll()
     {
-        if (targetUI == null || arrow == null) return;
+        if (overlay != null) overlay.SetActive(false);
 
-        Vector3 screenPos = targetUI.position;
-        arrow.position = screenPos + new Vector3(0, 80f, 0);
+        foreach (var p in panels)
+        {
+            if (p != null) p.SetActive(false);
+        }
     }
 
-    void NextStep()
+    void Show(int index)
     {
-        stepIndex++;
-        ShowStep();
+        if (PlayerPrefs.GetInt(TUTORIAL_KEY, 0) == 1) return;
+        if (index < 0 || index >= panels.Length) return;
+        if (stepTriggered[index]) return;
+        if (!readyForNextStep) return;
+
+        stepTriggered[index] = true;
+        readyForNextStep = false;
+
+        StartCoroutine(ShowStep(index));
     }
 
-    void EndTutorial()
+    IEnumerator ShowStep(int index)
     {
-        isTutorialActive = false;
-        tutorialPanel.SetActive(false);
+        // REQUIRED: delay bago lumabas step UI
+        yield return new WaitForSecondsRealtime(1f);
+
+        HideAll();
+        currentIndex = index;
+
+        if (overlay != null) overlay.SetActive(true);
+        if (panels[index] != null) panels[index].SetActive(true);
+
+        Time.timeScale = 0f;
+
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = false;
+
+        waitingForContinue = true;
+    }
+
+    // =========================
+    // CONTINUE BUTTON (UPDATED)
+    // =========================
+    public void Continue()
+    {
+        if (!waitingForContinue) return;
+
+        HideAll();
         Time.timeScale = 1f;
+
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = true;
+
+        waitingForContinue = false;
+
+        // IMPORTANT:
+        // hindi na siya mag-aadvance dito
+        // hintay na lang ng game event (movement / interact / etc.)
+        readyForNextStep = true;
     }
 
-    void SkipTutorial()
+    public void Skip()
     {
-        PlayerPrefs.SetInt(prefsKey, 1);
+        CompleteTutorial();
+    }
+
+    void CompleteTutorial()
+    {
+        HideAll();
+        Time.timeScale = 1f;
+
+        PlayerPrefs.SetInt(TUTORIAL_KEY, 1);
         PlayerPrefs.Save();
 
-        EndTutorial();
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = true;
+
+        gameObject.SetActive(false);
     }
 
-    Transform FindUI(string name)
+    // =========================
+    // TRIGGERS
+    // =========================
+    public void Tutorial0_Joystick()
     {
-        GameObject obj = GameObject.Find(name);
-        if (obj != null) return obj.transform;
-        return null;
+        Show(0);
+    }
+
+    public void Tutorial1_Swipe()
+    {
+        if (!stepTriggered[0]) return;
+        Show(1);
+    }
+
+    public void Tutorial2_Interact()
+    {
+        if (!stepTriggered[1]) return;
+        Show(2);
+    }
+
+    public void ShowArrow(int index)
+    {
+        if (index >= 3 && index < panels.Length)
+        {
+            Show(index);
+        }
+    }
+
+    public bool IsBasicTutorialDone()
+    {
+        return stepTriggered[0] && stepTriggered[1] && stepTriggered[2];
+    }
+
+    public void ForceComplete()
+    {
+        CompleteTutorial();
     }
 }

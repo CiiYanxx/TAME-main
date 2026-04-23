@@ -115,19 +115,28 @@ public class DialogSystem : MonoBehaviour
     public void OpenDialogUI()
     {
         CloseAllPanels();
-        if (dialogPanel) dialogPanel.SetActive(true);
+        dialogPanel.SetActive(true);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.ShowArrow(3);
     }
 
     public void OpenLocationSelection()
     {
         CloseAllPanels();
-        if (locationSelectionPanel) locationSelectionPanel.SetActive(true);
+        locationSelectionPanel.SetActive(true);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.ShowArrow(4);
     }
 
     public void OpenAnimalSelection()
     {
         CloseAllPanels();
-        if (animalSelectionPanel) animalSelectionPanel.SetActive(true);
+        animalSelectionPanel.SetActive(true);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.ShowArrow(5);
     }
 
     public void ClearAnimalList()
