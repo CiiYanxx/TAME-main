@@ -16,71 +16,92 @@ public class QuestCard : MonoBehaviour
 
     private QuestInfo currentInfo;
     private NPC currentNpc;
+
     private float cooldownTimer = 0f;
     private bool isCooldown = false;
 
+    // =========================
+    // SETUP (FIXED)
+    // =========================
     public void Setup(QuestInfo info, NPC npc, bool canAccept)
     {
         currentInfo = info;
         currentNpc = npc;
 
-        if (titleText != null) titleText.text = info.questTitle; 
-        if (animalIcon != null) animalIcon.sprite = info.animalIcon;
+        // 🔥 SAFE UI SET
+        if (titleText != null)
+            titleText.text = info.questTitle;
 
-        Button btn = acceptButtonObj.GetComponent<Button>();
-        if (btn != null)
+        if (animalIcon != null && info.animalIcon != null)
+            animalIcon.sprite = info.animalIcon;
+
+        // 🔥 BUTTON SETUP
+        if (acceptButtonObj != null)
         {
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => {
-                DialogSystem.Instance.OpenMissionPreview(currentInfo, currentNpc);
-            });
+            Button btn = acceptButtonObj.GetComponent<Button>();
+
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() =>
+                {
+                    DialogSystem.Instance.OpenMissionPreview(currentInfo, currentNpc);
+                });
+            }
         }
+
+        // 🔥 CHECK COOLDOWN FROM NPC (IMPORTANT FIX)
+        CheckCooldownFromNPC();
 
         RefreshUI();
     }
 
+    // =========================
+    // UPDATE TIMER
+    // =========================
     void Update()
     {
-        if (isCooldown)
-        {
-            cooldownTimer -= Time.deltaTime;
-            
-            if (timerText != null) 
-            {
-                // Smart Formatting: Tinatawag ang bagong logic natin sa baba
-                timerText.text = FormatTime(cooldownTimer);
-            }
+        if (!isCooldown) return;
 
-            if (cooldownTimer <= 0)
-            {
-                isCooldown = false;
-                RefreshUI(); 
-            }
+        cooldownTimer -= Time.deltaTime;
+
+        if (timerText != null)
+            timerText.text = FormatTime(cooldownTimer);
+
+        if (cooldownTimer <= 0)
+        {
+            isCooldown = false;
+            RefreshUI();
         }
     }
 
-    // --- SMART FORMATTING LOGIC ---
+    // =========================
+    // FORMAT TIMER
+    // =========================
     private string FormatTime(float timeInSeconds)
     {
+        timeInSeconds = Mathf.Max(0, timeInSeconds);
+
         int minutes = Mathf.FloorToInt(timeInSeconds / 60);
         int seconds = Mathf.FloorToInt(timeInSeconds % 60);
 
         if (minutes > 0)
-        {
-            // Kapag 1 minute pataas, ipakita ang "1m 30s"
-            return string.Format("{0}m {1:00}s", minutes, seconds);
-        }
+            return $"{minutes}m {seconds:00}s";
         else
-        {
-            // Kapag seconds na lang, ipakita ang "30s" (wala na yung 0m)
-            return string.Format("{0}s", seconds);
-        }
+            return $"{seconds}s";
     }
 
+    
     public void RefreshUI()
     {
-        bool isFinished = PlayerPrefs.GetInt("Mission_" + currentInfo.targetAnimalName, 0) == 1;
+        if (currentInfo == null || currentNpc == null) return;
 
+        string missionID = currentInfo.targetAnimalName;
+
+        bool isFinished = PlayerPrefs.GetInt("Mission_" + missionID, 0) == 1;
+        bool hasCooldown = currentNpc.HasCooldown(missionID);
+
+        // RESET ALL
         acceptButtonObj.SetActive(false);
         successImageObj.SetActive(false);
         timerButtonObj.SetActive(false);
@@ -89,19 +110,15 @@ public class QuestCard : MonoBehaviour
         {
             successImageObj.SetActive(true);
         }
-        else if (isCooldown)
+        else if (hasCooldown)
         {
             timerButtonObj.SetActive(true);
-            
-            Image timerImg = timerButtonObj.GetComponent<Image>();
-            if (timerImg != null)
-            {
-                // Solid grayish color (0.85 alpha)
-                timerImg.color = new Color(0.3f, 0.3f, 0.3f, 0.85f);
-            }
 
-            Button timerBtn = timerButtonObj.GetComponent<Button>();
-            if (timerBtn != null) timerBtn.interactable = false;
+            cooldownTimer = currentNpc.GetCooldownRemaining(missionID);
+            isCooldown = true;
+
+            Button btn = timerButtonObj.GetComponent<Button>();
+            if (btn != null) btn.interactable = false;
         }
         else
         {
@@ -109,6 +126,36 @@ public class QuestCard : MonoBehaviour
         }
     }
 
+    // =========================
+    // 🔥 SYNC COOLDOWN WITH NPC
+    // =========================
+    void CheckCooldownFromNPC()
+    {
+        if (currentNpc == null || currentInfo == null) return;
+
+        string missionID = currentInfo.targetAnimalName;
+
+        if (currentNpc.HasCooldown(missionID))
+        {
+            float remaining = currentNpc.GetCooldownRemaining(missionID);
+
+            if (remaining > 0)
+            {
+                cooldownTimer = remaining;
+                isCooldown = true;
+            }
+        }
+    }
+
+    private void OnEnable()
+    {
+        NPC.OnQuestStateChanged += RefreshUI;
+    }
+
+    private void OnDisable()
+    {
+        NPC.OnQuestStateChanged -= RefreshUI;
+    }
     public void StartCooldown(float seconds)
     {
         cooldownTimer = seconds;

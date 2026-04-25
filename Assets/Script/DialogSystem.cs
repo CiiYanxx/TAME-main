@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class DialogSystem : MonoBehaviour
 {
@@ -32,6 +33,12 @@ public class DialogSystem : MonoBehaviour
     [Header("Exit Logic")]
     public Button backToNPCBTN; 
 
+    [Header("Panels")]
+    public GameObject locationPanel;
+
+    // 🔥 NEW: CLEAN SPAWN SYSTEM
+    private List<GameObject> spawnedRows = new List<GameObject>();
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -42,109 +49,173 @@ public class DialogSystem : MonoBehaviour
     {
         CloseAllPanels();
 
+        // LOCATION BUTTONS
+        for (int i = 0; i < locationCards.Length; i++)
+        {
+            int index = i;
+
+            if (locationCards[i] != null)
+            {
+                locationCards[i].onClick.RemoveAllListeners();
+                locationCards[i].onClick.AddListener(() =>
+                {
+                    Debug.Log("Location Card " + index + " clicked!");
+                    OpenAnimalSelection(index);
+                });
+            }
+        }
+
         if (backToNPCBTN != null)
         {
-            backToNPCBTN.onClick.AddListener(() => {
-                if (NPC.Instance != null) NPC.Instance.EndConversation(); 
+            backToNPCBTN.onClick.AddListener(() =>
+            {
+                if (NPC.Instance != null) NPC.Instance.EndConversation();
                 else CloseAllPanels();
             });
         }
     }
 
-    public void OpenMissionPreview(QuestInfo info, NPC npc)
-    {
-        CloseAllPanels();
-        if (previewPanel) previewPanel.SetActive(true);
-
-        if (previewAnimalImage && info.animalFullPreview != null) 
-            previewAnimalImage.sprite = info.animalFullPreview;
-        
-        // AUTO-COLORING LOGIC
-        if (detailsText)
-        {
-            // Details Labels: Light Blue (#40A6CE)
-            string coloredDetails = info.animalDetails
-                .Replace("BREED:", "<color=#40A6CE>BREED:</color>")
-                .Replace("AGE:", "<color=#40A6CE>AGE:</color>")
-                .Replace("STATUS:", "<color=#40A6CE>STATUS:</color>")
-                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>")
-                .Replace("CONDITION:", "<color=#40A6CE>CONDITION:</color>")
-                .Replace("BEHAVIOR:", "<color=#40A6CE>BEHAVIOR:</color>")
-                .Replace("DIET:", "<color=#40A6CE>DIET:</color>");
-            detailsText.text = coloredDetails;
-        }
-
-        if (descriptionText)
-        {
-            // Description Label: Light Blue (#40A6CE)
-            // Hint Label & Content: Green (#00FF00)
-            string rawDesc = info.missionDescription;
-
-            string coloredDesc = rawDesc
-                .Replace("DESCRIPTION:", "<color=#40A6CE>DESCRIPTION:</color>");
-
-            // Para sa Hint, pati yung kasunod na text ay magiging green hanggang sa dulo ng line
-            if (coloredDesc.Contains("HINT:"))
-            {
-                coloredDesc = coloredDesc.Replace("HINT:", "<color=#00FF00>HINT:");
-                coloredDesc += "</color>"; // Isinasara ang green tag para sa hint part
-            }
-
-            descriptionText.text = coloredDesc;
-        }
-
-        if (confirmPreviewBtn != null)
-        {
-            confirmPreviewBtn.onClick.RemoveAllListeners();
-            confirmPreviewBtn.onClick.AddListener(() => {
-                if (previewPanel) previewPanel.SetActive(false);
-                OpenDialogUI(); 
-                npc.AcceptMission(info); 
-            });
-        }
-    }
-
-    public void CloseAllPanels()
-    {
-        if (dialogPanel) dialogPanel.SetActive(false);
-        if (locationSelectionPanel) locationSelectionPanel.SetActive(false);
-        if (animalSelectionPanel) animalSelectionPanel.SetActive(false);
-        if (previewPanel) previewPanel.SetActive(false);
-    }
-
+    // ==========================================
+    // 1st STEP: MAIN DIALOG
+    // ==========================================
     public void OpenDialogUI()
     {
         CloseAllPanels();
         dialogPanel.SetActive(true);
 
-        if (TutorialController.Instance != null)
-            TutorialController.Instance.ShowArrow(3);
+        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
+        {
+            TutorialController.Instance.ShowArrowOnIndex(0);
+        }
     }
 
+    // ==========================================
+    // 2nd STEP: MISSION PREVIEW
+    // ==========================================
+    public void OpenMissionPreview(QuestInfo info, NPC npc)
+    {
+        CloseAllPanels();
+        previewPanel.SetActive(true);
+
+        if (previewAnimalImage && info.animalFullPreview != null)
+            previewAnimalImage.sprite = info.animalFullPreview;
+
+        if (detailsText)
+        {
+            detailsText.text = info.animalDetails
+                .Replace("BREED:", "<color=#40A6CE>BREED:</color>")
+                .Replace("AGE:", "<color=#40A6CE>AGE:</color>")
+                .Replace("STATUS:", "<color=#40A6CE>STATUS:</color>")
+                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>");
+        }
+
+        if (descriptionText)
+        {
+            descriptionText.text = info.missionDescription;
+        }
+
+        confirmPreviewBtn.onClick.RemoveAllListeners();
+        confirmPreviewBtn.onClick.AddListener(() =>
+        {
+            npc.AcceptMission(info);
+        });
+
+        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
+        {
+            TutorialController.Instance.ShowArrowOnIndex(3);
+        }
+    }
+
+    // ==========================================
+    // 3rd STEP: LOCATION
+    // ==========================================
     public void OpenLocationSelection()
     {
         CloseAllPanels();
         locationSelectionPanel.SetActive(true);
+        locationPanel.SetActive(true);
 
-        if (TutorialController.Instance != null)
-            TutorialController.Instance.ShowArrow(4);
+        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
+        {
+            TutorialController.Instance.ShowArrowOnIndex(1);
+        }
     }
 
-    public void OpenAnimalSelection()
+    // ==========================================
+    // 4th STEP: ANIMAL SELECTION (FIXED)
+    // ==========================================
+    public void OpenAnimalSelection(int locationIndex)
     {
         CloseAllPanels();
         animalSelectionPanel.SetActive(true);
 
-        if (TutorialController.Instance != null)
-            TutorialController.Instance.ShowArrow(5);
+        SpawnAnimalList(locationIndex);
+
+        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
+        {
+            TutorialController.Instance.ShowArrowOnIndex(2);
+        }
     }
 
+    // 🔥 SPAWN SYSTEM (FIXED)
+    void SpawnAnimalList(int locationIndex)
+    {
+        ClearAnimalList();
+
+        if (NPC.Instance == null) return;
+
+        foreach (QuestInfo info in NPC.Instance.allQuests)
+        {
+            if (info.locationIndex != locationIndex) continue;
+
+            GameObject row = Instantiate(animalRowPrefab, animalListContainer);
+            spawnedRows.Add(row);
+
+            // 🔥 VERY IMPORTANT PART
+            QuestCard card = row.GetComponent<QuestCard>();
+
+            if (card != null)
+            {
+                card.Setup(info, NPC.Instance, true);
+            }
+            else
+            {
+                Debug.LogError("Walang QuestCard script sa prefab mo!");
+            }
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(animalListContainer.GetComponent<RectTransform>());
+    }
+
+    // 🔥 CLEAR SYSTEM (FIXED)
     public void ClearAnimalList()
     {
-        if (animalListContainer == null) return;
+        foreach (var row in spawnedRows)
+        {
+            if (row != null) Destroy(row);
+        }
+
+        spawnedRows.Clear();
+
+        // EXTRA CLEAN (safety)
         for (int i = animalListContainer.childCount - 1; i >= 0; i--)
         {
             Destroy(animalListContainer.GetChild(i).gameObject);
         }
+    }
+
+    // ==========================================
+    // CLOSE ALL
+    // ==========================================
+    public void CloseAllPanels()
+    {
+        dialogPanel.SetActive(false);
+        locationSelectionPanel.SetActive(false);
+        animalSelectionPanel.SetActive(false);
+        previewPanel.SetActive(false);
+        locationPanel.SetActive(false);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.HideArrowUI();
     }
 }

@@ -48,6 +48,8 @@ public class PlayerMovement : MonoBehaviour
     private float autoSaveTimer = 0f;
     private Coroutine cinematicCoroutine; 
 
+    private bool cameraFullyReset = false;
+
     [HideInInspector] public bool canControl = false, isInteracting = false;
 
     void Awake()
@@ -62,6 +64,8 @@ public class PlayerMovement : MonoBehaviour
         Application.targetFrameRate = 60;
 
         if (mainCanvas != null) mainCanvas.SetActive(false);
+
+        // 🔥 HIDDEN AT START
         TogglePlayerVisuals(false);
 
         if (playerCamera == null) playerCamera = Camera.main;
@@ -87,27 +91,53 @@ public class PlayerMovement : MonoBehaviour
 
     IEnumerator InitializeGameFlow()
     {
+        GameData data = SaveSystem.Load();
         bool isNewGame = PlayerPrefs.GetInt("IsNewGame", 0) == 1;
 
-        if (SaveSystem.HasSave() && !isNewGame)
+        // 1. CHECK KUNG MAY SAVE DATA AT HINDI NEW GAME
+        if (data != null && !isNewGame)
         {
-            LoadPlayerPosition();
+            Debug.Log("<color=green>[PLAYER GAMELOG]</color> Save data found. Resuming game...");
+
+            // I-set ang position base sa save file (playerPos ay float array sa GameData mo)
+            if (data.playerPos != null && data.playerPos.Length == 3)
+            {
+                if (controller != null) controller.enabled = false;
+                
+                // Convert float array back to Vector3
+                Vector3 savedPos = new Vector3(data.playerPos[0], data.playerPos[1], data.playerPos[2]);
+                transform.position = savedPos;
+                
+                if (controller != null) controller.enabled = true;
+                Debug.Log("<color=cyan>[PLAYER GAMELOG]</color> Player Teleported to: " + savedPos);
+            }
+
             ResetCameraToDefault();
-            FinishIntro();
-            yield break;
+            
+            // Direkta sa laro, skip ang intro/cinematic
+            if (mainCanvas != null) mainCanvas.SetActive(true);
+            TogglePlayerVisuals(true);
+            canControl = true; 
+            
+            yield break; // Tapos na ang flow dito para sa Resume
         }
 
+        // 2. KUNG NEW GAME O WALANG SAVE DATA
+        Debug.Log("<color=yellow>[PLAYER GAMELOG]</color> New Game detected. Starting Cinematic...");
+        
         PlayerPrefs.SetInt("IsNewGame", 0);
         PlayerPrefs.Save();
 
+        // I-set sa default spawn position para sa tutorial
         if (controller != null) controller.enabled = false;
         transform.position = defaultSpawnPosition;
         if (controller != null) controller.enabled = true;
 
+        // Simulan ang Cinematic
         cinematicCoroutine = StartCoroutine(PlayFullCinematicMaster());
     }
 
-    IEnumerator PlayFullCinematicMaster()
+  IEnumerator PlayFullCinematicMaster()
     {
         canControl = false;
 
@@ -135,6 +165,10 @@ public class PlayerMovement : MonoBehaviour
         }
 
         yield return StartCoroutine(ReturnToDefaultView());
+
+        cameraFullyReset = true;
+
+        yield return null;
 
         cinematicCoroutine = null;
         FinishIntro();
@@ -180,7 +214,7 @@ public class PlayerMovement : MonoBehaviour
 
     IEnumerator DelayedPlayerShow()
     {
-        yield return new WaitForSeconds(playerSpawnDelay);
+        yield return new WaitForSecondsRealtime(playerSpawnDelay);
         TogglePlayerVisuals(true);
     }
 
@@ -193,40 +227,32 @@ public class PlayerMovement : MonoBehaviour
         }
 
         ResetCameraToDefault();
+        cameraFullyReset = true;
         FinishIntro();
     }
 
     private void FinishIntro()
     {
+        if (mainCanvas != null) mainCanvas.SetActive(true);
         TogglePlayerVisuals(true);
 
-        if (mainCanvas != null) mainCanvas.SetActive(true);
-
-        // IMPORTANT: cinematic is DONE here, so allow tutorial flow
-        canControl = false;
-
-        if (TutorialController.Instance != null)
+        if (TutorialController.Instance != null && PlayerPrefs.GetInt("Tutorial_Completed", 0) == 0)
         {
+            canControl = false; // Stop muna para sa tutorial
             StartCoroutine(StartTutorialAfterIntro());
         }
         else
         {
-            canControl = true;
+            canControl = true; // Default na true kung tapos na tutorial
         }
     }
 
     IEnumerator StartTutorialAfterIntro()
     {
-        // wait AFTER full cinematic + camera reset + UI restore
-        yield return new WaitForSecondsRealtime(1f);
+        while (!cameraFullyReset)
+            yield return null;
 
-        TutorialController.Instance.Tutorial0_Joystick();
-    }
-
-    IEnumerator StartTutorialAfterDelay()
-    {
-        // 🔥 REQUIRED FIX: delay before Step 0
-        yield return new WaitForSecondsRealtime(1f);
+        yield return new WaitForSecondsRealtime(0.3f);
 
         TutorialController.Instance.Tutorial0_Joystick();
     }
@@ -242,6 +268,39 @@ public class PlayerMovement : MonoBehaviour
 
             playerCamera.transform.rotation = orbitRot;
         }
+    }
+
+    IEnumerator ReturnToDefaultView()
+    {
+        if (playerCamera == null || cameraOrbitTarget == null)
+            yield break;
+
+        Quaternion targetRot = Quaternion.Euler(cameraPitch, cameraYaw, 0);
+        Vector3 targetPos = cameraOrbitTarget.position + (targetRot * Vector3.back * defaultDistance);
+
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime * 2f;
+
+            playerCamera.transform.position = Vector3.Lerp(
+                playerCamera.transform.position,
+                targetPos,
+                t
+            );
+
+            playerCamera.transform.rotation = Quaternion.Slerp(
+                playerCamera.transform.rotation,
+                targetRot,
+                t
+            );
+
+            yield return null;
+        }
+
+        playerCamera.transform.position = targetPos;
+        playerCamera.transform.rotation = targetRot;
     }
 
     void Update()
@@ -270,10 +329,6 @@ public class PlayerMovement : MonoBehaviour
             HandleCameraRotation();
         }
     }
-
-    // ======================
-    // YOUR ORIGINAL LOGIC BELOW (UNCHANGED STRUCTURE)
-    // ======================
 
     void HandleCameraRotation()
     {
@@ -355,7 +410,18 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void LoadPlayerPosition() { }
-    IEnumerator ReturnToDefaultView() { yield return null; }
-    private void TogglePlayerVisuals(bool show) { }
+
+    private void TogglePlayerVisuals(bool show)
+    {
+        Renderer[] rends = GetComponentsInChildren<Renderer>(true);
+        foreach (Renderer r in rends)
+        {
+            r.enabled = show;
+        }
+
+        if (anim != null)
+            anim.enabled = show;
+    }
+
     private void DoAutoSave() { }
 }
