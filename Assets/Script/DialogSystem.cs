@@ -36,8 +36,13 @@ public class DialogSystem : MonoBehaviour
     [Header("Panels")]
     public GameObject locationPanel;
 
-    // 🔥 NEW: CLEAN SPAWN SYSTEM
+    [Header("Progress Lock")]
+    public int requiredLevelForNextLocation = 10;
+
     private List<GameObject> spawnedRows = new List<GameObject>();
+
+    // 🔥 FIX: prevent duplicate arrow spam
+    private int lastArrowIndex = -1;
 
     private void Awake()
     {
@@ -48,8 +53,8 @@ public class DialogSystem : MonoBehaviour
     private void Start()
     {
         CloseAllPanels();
+        UpdateLocationLocks();
 
-        // LOCATION BUTTONS
         for (int i = 0; i < locationCards.Length; i++)
         {
             int index = i;
@@ -60,6 +65,16 @@ public class DialogSystem : MonoBehaviour
                 locationCards[i].onClick.AddListener(() =>
                 {
                     Debug.Log("Location Card " + index + " clicked!");
+
+                    int playerLevel = PlayerPrefs.GetInt("Player_Level", 1);
+                    bool locked = playerLevel < (requiredLevelForNextLocation * (index + 1));
+
+                    if (locked)
+                    {
+                        Debug.LogWarning($"Location {index} is LOCKED");
+                        return;
+                    }
+
                     OpenAnimalSelection(index);
                 });
             }
@@ -74,27 +89,34 @@ public class DialogSystem : MonoBehaviour
             });
         }
     }
-
     // ==========================================
-    // 1st STEP: MAIN DIALOG
+    void HideTutorialArrow()
+    {
+        if (TutorialController.Instance != null)
+        {
+            TutorialController.Instance.HideArrowUI();
+        }
+
+        lastArrowIndex = -1; // 🔥 RESET FIX
+    }
+
     // ==========================================
     public void OpenDialogUI()
     {
         CloseAllPanels();
+        HideTutorialArrow();
+
         dialogPanel.SetActive(true);
 
-        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
-        {
-            TutorialController.Instance.ShowArrowOnIndex(0);
-        }
+        TriggerArrow(0);
     }
 
-    // ==========================================
-    // 2nd STEP: MISSION PREVIEW
     // ==========================================
     public void OpenMissionPreview(QuestInfo info, NPC npc)
     {
         CloseAllPanels();
+        HideTutorialArrow();
+
         previewPanel.SetActive(true);
 
         if (previewAnimalImage && info.animalFullPreview != null)
@@ -110,9 +132,7 @@ public class DialogSystem : MonoBehaviour
         }
 
         if (descriptionText)
-        {
             descriptionText.text = info.missionDescription;
-        }
 
         confirmPreviewBtn.onClick.RemoveAllListeners();
         confirmPreviewBtn.onClick.AddListener(() =>
@@ -120,74 +140,78 @@ public class DialogSystem : MonoBehaviour
             npc.AcceptMission(info);
         });
 
-        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
-        {
-            TutorialController.Instance.ShowArrowOnIndex(3);
-        }
+        TriggerArrow(3);
     }
 
-    // ==========================================
-    // 3rd STEP: LOCATION
     // ==========================================
     public void OpenLocationSelection()
     {
         CloseAllPanels();
+        HideTutorialArrow();
+
         locationSelectionPanel.SetActive(true);
         locationPanel.SetActive(true);
 
-        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
-        {
-            TutorialController.Instance.ShowArrowOnIndex(1);
-        }
+        TriggerArrow(1);
     }
 
-    // ==========================================
-    // 4th STEP: ANIMAL SELECTION (FIXED)
     // ==========================================
     public void OpenAnimalSelection(int locationIndex)
     {
         CloseAllPanels();
+
+        // 🔥 ADD THIS (kills arrow before UI changes)
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.HideArrowUI();
+
         animalSelectionPanel.SetActive(true);
 
         SpawnAnimalList(locationIndex);
 
-        if (TutorialController.Instance != null && NPC.Instance.totalCompletedMissions == 0)
-        {
-            TutorialController.Instance.ShowArrowOnIndex(2);
-        }
+        TriggerArrow(2);
     }
 
-    // 🔥 SPAWN SYSTEM (FIXED)
     void SpawnAnimalList(int locationIndex)
     {
         ClearAnimalList();
 
-        if (NPC.Instance == null) return;
+        if (NPC.Instance == null)
+        {
+            Debug.LogError("[DialogSystem] NPC is NULL");
+            return;
+        }
+
+        Debug.Log($"[DialogSystem] Loading animals for locationIndex = {locationIndex}");
+
+        bool foundAny = false;
 
         foreach (QuestInfo info in NPC.Instance.allQuests)
         {
+            Debug.Log($"Checking Quest: {info.targetAnimalName} | loc={info.locationIndex}");
+
             if (info.locationIndex != locationIndex) continue;
+
+            foundAny = true;
 
             GameObject row = Instantiate(animalRowPrefab, animalListContainer);
             spawnedRows.Add(row);
 
-            // 🔥 VERY IMPORTANT PART
             QuestCard card = row.GetComponent<QuestCard>();
 
             if (card != null)
-            {
                 card.Setup(info, NPC.Instance, true);
-            }
-            else
-            {
-                Debug.LogError("Walang QuestCard script sa prefab mo!");
-            }
         }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(animalListContainer.GetComponent<RectTransform>());
+        if (!foundAny)
+        {
+            Debug.LogWarning($"[DialogSystem] NO QUEST FOUND for location {locationIndex}");
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(
+            animalListContainer.GetComponent<RectTransform>()
+        );
     }
 
-    // 🔥 CLEAR SYSTEM (FIXED)
     public void ClearAnimalList()
     {
         foreach (var row in spawnedRows)
@@ -197,15 +221,12 @@ public class DialogSystem : MonoBehaviour
 
         spawnedRows.Clear();
 
-        // EXTRA CLEAN (safety)
         for (int i = animalListContainer.childCount - 1; i >= 0; i--)
         {
             Destroy(animalListContainer.GetChild(i).gameObject);
         }
     }
 
-    // ==========================================
-    // CLOSE ALL
     // ==========================================
     public void CloseAllPanels()
     {
@@ -215,7 +236,35 @@ public class DialogSystem : MonoBehaviour
         previewPanel.SetActive(false);
         locationPanel.SetActive(false);
 
-        if (TutorialController.Instance != null)
-            TutorialController.Instance.HideArrowUI();
+        HideTutorialArrow();
     }
+
+    void TriggerArrow(int index)
+    {
+        if (TutorialController.Instance == null) return;
+        if (NPC.Instance != null && NPC.Instance.totalCompletedMissions > 0) return;
+
+        if (lastArrowIndex == index) return; // 🔥 PREVENT DUPLICATE
+
+        lastArrowIndex = index;
+
+        TutorialController.Instance.ShowArrowOnIndex(index);
+    }
+
+    void UpdateLocationLocks()
+    {
+        int playerLevel = PlayerPrefs.GetInt("Player_Level", 1);
+
+        for (int i = 0; i < locationCards.Length; i++)
+        {
+            bool locked = playerLevel < (requiredLevelForNextLocation * (i + 1));
+
+            if (locationCards[i] != null)
+                locationCards[i].interactable = !locked;
+
+            if (locationLocks != null && i < locationLocks.Length && locationLocks[i] != null)
+                locationLocks[i].SetActive(locked);
+        }
+    }
+
 }

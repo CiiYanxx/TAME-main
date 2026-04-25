@@ -20,22 +20,17 @@ public class QuestCard : MonoBehaviour
     private float cooldownTimer = 0f;
     private bool isCooldown = false;
 
-    // =========================
-    // SETUP (FIXED)
-    // =========================
     public void Setup(QuestInfo info, NPC npc, bool canAccept)
     {
         currentInfo = info;
         currentNpc = npc;
 
-        // 🔥 SAFE UI SET
         if (titleText != null)
             titleText.text = info.questTitle;
 
         if (animalIcon != null && info.animalIcon != null)
             animalIcon.sprite = info.animalIcon;
 
-        // 🔥 BUTTON SETUP
         if (acceptButtonObj != null)
         {
             Button btn = acceptButtonObj.GetComponent<Button>();
@@ -50,15 +45,10 @@ public class QuestCard : MonoBehaviour
             }
         }
 
-        // 🔥 CHECK COOLDOWN FROM NPC (IMPORTANT FIX)
         CheckCooldownFromNPC();
-
         RefreshUI();
     }
 
-    // =========================
-    // UPDATE TIMER
-    // =========================
     void Update()
     {
         if (!isCooldown) return;
@@ -75,9 +65,6 @@ public class QuestCard : MonoBehaviour
         }
     }
 
-    // =========================
-    // FORMAT TIMER
-    // =========================
     private string FormatTime(float timeInSeconds)
     {
         timeInSeconds = Mathf.Max(0, timeInSeconds);
@@ -85,13 +72,43 @@ public class QuestCard : MonoBehaviour
         int minutes = Mathf.FloorToInt(timeInSeconds / 60);
         int seconds = Mathf.FloorToInt(timeInSeconds % 60);
 
-        if (minutes > 0)
-            return $"{minutes}m {seconds:00}s";
-        else
-            return $"{seconds}s";
+        return minutes > 0 ? $"{minutes}m {seconds:00}s" : $"{seconds}s";
     }
 
-    
+    Transform arrowRef;
+
+    void OnEnable()
+    {
+        if (TutorialController.Instance != null)
+        {
+            arrowRef = transform.Find("Prefab_Arrow");
+
+            if (arrowRef != null)
+            {
+                Debug.Log("[QuestCard] REGISTER arrow → " + arrowRef.name);
+                TutorialController.Instance.RegisterRuntimeArrow(arrowRef.gameObject);
+            }
+            else
+            {
+                Debug.LogError("[QuestCard] ❌ NO Prefab_Arrow FOUND");
+            }
+        }
+    }
+
+    void OnDisable()
+    {
+        if (TutorialController.Instance != null)
+        {
+            Transform arrow = transform.Find("Prefab_Arrow");
+
+            if (arrow != null)
+            {
+                Debug.Log("[QuestCard] UNREGISTER arrow → " + arrow.name);
+                TutorialController.Instance.UnregisterRuntimeArrow(arrow.gameObject);
+            }
+        }
+    }
+
     public void RefreshUI()
     {
         if (currentInfo == null || currentNpc == null) return;
@@ -101,7 +118,6 @@ public class QuestCard : MonoBehaviour
         bool isFinished = PlayerPrefs.GetInt("Mission_" + missionID, 0) == 1;
         bool hasCooldown = currentNpc.HasCooldown(missionID);
 
-        // RESET ALL
         acceptButtonObj.SetActive(false);
         successImageObj.SetActive(false);
         timerButtonObj.SetActive(false);
@@ -126,9 +142,6 @@ public class QuestCard : MonoBehaviour
         }
     }
 
-    // =========================
-    // 🔥 SYNC COOLDOWN WITH NPC
-    // =========================
     void CheckCooldownFromNPC()
     {
         if (currentNpc == null || currentInfo == null) return;
@@ -147,15 +160,6 @@ public class QuestCard : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        NPC.OnQuestStateChanged += RefreshUI;
-    }
-
-    private void OnDisable()
-    {
-        NPC.OnQuestStateChanged -= RefreshUI;
-    }
     public void StartCooldown(float seconds)
     {
         cooldownTimer = seconds;

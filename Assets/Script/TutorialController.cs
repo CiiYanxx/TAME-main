@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,23 +10,29 @@ public class TutorialController : MonoBehaviour
     public GameObject overlay;
     public GameObject[] panels;
 
-    [Header("Multi-Target Arrow System")]
-    public RectTransform dialogArrow; 
-    public RectTransform[] targetButtons; 
+    [Header("Multi-Target Arrow System (UI OBJECTS)")]
+    public RectTransform[] targetButtons;
 
-    [Header("Arrow Animation Settings")]
-    public Vector3 arrowOffset = new Vector3(0, 150, 0); 
-    public float bounceDistance = 20f;
-    public float bounceSpeed = 5f;
+    [Header("Arrow UI Objects (ASSIGN PER INDEX, DEFAULT OFF)")]
+    public GameObject[] arrowObjects;
 
     private const string TUTORIAL_KEY = "Tutorial_Completed";
+
     private int currentIndex = -1;
     private bool[] stepTriggered;
+    private bool[] panelArrowShown;
+
     private bool waitingForContinue = false;
     private bool readyForNextStep = true;
 
-    private RectTransform currentTarget;
-    private Coroutine animationCoroutine;
+    private RectTransform currentArrow;
+    private Coroutine arrowAnim;
+
+    // 🔥 GLOBAL LOCK
+    private bool arrowsLocked = false;
+
+    // 🔥 RUNTIME ARROWS (FIX FOR PREFAB ISSUE)
+    private List<GameObject> runtimeArrows = new List<GameObject>();
 
     void Awake()
     {
@@ -38,6 +45,8 @@ public class TutorialController : MonoBehaviour
         }
 
         stepTriggered = new bool[panels.Length];
+        panelArrowShown = new bool[panels.Length];
+
         HideAll();
         HideArrowUI();
     }
@@ -45,14 +54,38 @@ public class TutorialController : MonoBehaviour
     void HideAll()
     {
         if (overlay != null) overlay.SetActive(false);
+
         foreach (var p in panels)
-        {
             if (p != null) p.SetActive(false);
+
+        HideArrowUI();
+    }
+
+    // =========================
+    // PANEL SYSTEM
+    // =========================
+    void ShowPanel(int index)
+    {
+        HideAll();
+
+        if (overlay != null)
+            overlay.SetActive(true);
+
+        if (panels[index] != null)
+            panels[index].SetActive(true);
+
+        currentIndex = index;
+
+        if (!panelArrowShown[index] && !arrowsLocked)
+        {
+            panelArrowShown[index] = true;
+            ShowArrowOnIndex(index);
         }
     }
 
     void Show(int index)
     {
+        if (arrowsLocked) return;
         if (PlayerPrefs.GetInt(TUTORIAL_KEY, 0) == 1) return;
         if (index < 0 || index >= panels.Length) return;
         if (stepTriggered[index]) return;
@@ -60,20 +93,20 @@ public class TutorialController : MonoBehaviour
 
         stepTriggered[index] = true;
         readyForNextStep = false;
+
         StartCoroutine(ShowStep(index));
     }
 
     IEnumerator ShowStep(int index)
     {
         yield return new WaitForSecondsRealtime(1f);
-        HideAll();
-        currentIndex = index;
 
-        if (overlay != null) overlay.SetActive(true);
-        if (panels[index] != null) panels[index].SetActive(true);
+        ShowPanel(index);
 
         Time.timeScale = 0f;
-        if (PlayerMovement.Instance != null) PlayerMovement.Instance.canControl = false;
+
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = false;
 
         waitingForContinue = true;
     }
@@ -83,9 +116,11 @@ public class TutorialController : MonoBehaviour
         if (!waitingForContinue) return;
 
         HideAll();
+
         Time.timeScale = 1f;
 
-        if (PlayerMovement.Instance != null) PlayerMovement.Instance.canControl = true;
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = true;
 
         waitingForContinue = false;
         readyForNextStep = true;
@@ -95,14 +130,17 @@ public class TutorialController : MonoBehaviour
 
     void CompleteTutorial()
     {
+        arrowsLocked = true;
+
         HideAll();
-        HideArrowUI();
 
         Time.timeScale = 1f;
+
         PlayerPrefs.SetInt(TUTORIAL_KEY, 1);
         PlayerPrefs.Save();
 
-        if (PlayerMovement.Instance != null) PlayerMovement.Instance.canControl = true;
+        if (PlayerMovement.Instance != null)
+            PlayerMovement.Instance.canControl = true;
 
         gameObject.SetActive(false);
     }
@@ -112,62 +150,174 @@ public class TutorialController : MonoBehaviour
     public void Tutorial2_Interact() { if (stepTriggered[1]) Show(2); }
 
     // =========================
-    // FIXED ARROW SYSTEM
+    // STATIC ARROWS
     // =========================
-
     public void ShowArrowOnIndex(int index)
     {
-        if (dialogArrow == null || targetButtons == null || index >= targetButtons.Length)
-        {
-            Debug.LogWarning("Invalid arrow index!");
-            return;
-        }
+        if (arrowsLocked) return;
 
-        if (targetButtons[index] == null) return;
+        HideArrowUI();
 
-        StopArrowAnimation();
+        if (arrowObjects == null || index >= arrowObjects.Length) return;
 
-        Canvas.ForceUpdateCanvases(); // VERY IMPORTANT FIX
+        GameObject arrow = arrowObjects[index];
+        if (arrow == null) return;
 
-        currentTarget = targetButtons[index];
-        dialogArrow.gameObject.SetActive(true);
-        dialogArrow.position = currentTarget.position + arrowOffset;
+        arrow.SetActive(true);
 
-        animationCoroutine = StartCoroutine(AnimateArrow());
+        currentArrow = arrow.GetComponent<RectTransform>();
+
+        if (currentArrow != null)
+            arrowAnim = StartCoroutine(BounceArrow(currentArrow));
     }
 
-    IEnumerator AnimateArrow()
+    IEnumerator BounceArrow(RectTransform arrow)
     {
+        Vector2 startPos = arrow.anchoredPosition;
+
         while (true)
         {
-            if (currentTarget != null)
+            // 🔥 FIX: check if destroyed
+            if (arrow == null)
             {
-                Vector3 basePos = currentTarget.position + arrowOffset;
-
-                float newY = basePos.y + Mathf.Sin(Time.unscaledTime * bounceSpeed) * bounceDistance;
-
-                dialogArrow.position = new Vector3(basePos.x, newY, basePos.z);
+                Debug.Log("[Tutorial] Arrow destroyed → stopping coroutine");
+                yield break;
             }
+
+            float bounce = Mathf.Sin(Time.unscaledTime * 5f) * 10f;
+            arrow.anchoredPosition = startPos + new Vector2(0, bounce);
 
             yield return null;
         }
     }
 
-    public void HideArrowUI()
+    // =========================
+    // 🔥 RUNTIME ARROWS FIX (QUESTCARD PREFABS)
+    // =========================
+    public void RegisterRuntimeArrow(GameObject obj)
     {
-        StopArrowAnimation();
-        currentTarget = null;
+        if (obj == null) return;
 
-        if (dialogArrow != null)
-            dialogArrow.gameObject.SetActive(false);
+        if (!runtimeArrows.Contains(obj))
+            runtimeArrows.Add(obj);
     }
 
-    void StopArrowAnimation()
+    public void UnregisterRuntimeArrow(GameObject obj)
     {
-        if (animationCoroutine != null)
+        if (runtimeArrows.Contains(obj))
+            runtimeArrows.Remove(obj);
+    }
+
+    public void HideArrowUI()
+    {
+        Debug.Log("[Tutorial] HideArrowUI CALLED");
+
+        if (arrowAnim != null)
         {
-            StopCoroutine(animationCoroutine);
-            animationCoroutine = null;
+            StopCoroutine(arrowAnim);
+            arrowAnim = null;
+            Debug.Log("[Tutorial] Animation STOPPED");
         }
+
+        currentArrow = null;
+
+        // ✅ STATIC ARROWS ONLY
+        if (arrowObjects != null)
+        {
+            foreach (var a in arrowObjects)
+            {
+                if (a != null)
+                {
+                    a.SetActive(false);
+                    Debug.Log("[Tutorial] Static arrow OFF → " + a.name);
+                }
+            }
+        }
+
+        // ✅ RUNTIME ARROWS (QUEST CARDS)
+        foreach (var obj in runtimeArrows)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(false);
+                Debug.Log("[Tutorial] Runtime arrow OFF → " + obj.name);
+            }
+        }
+    }
+   
+    public void OnConversationEnd()
+    {
+        arrowsLocked = true;
+        HideArrowUI();
+    }
+
+    public void ForceHideAndReset()
+    {
+        HideArrowUI();
+        currentIndex = -1;
+    }
+
+    public void ResetArrowsOnConversationEnd()
+    {
+        OnConversationEnd();
+    }
+
+    public void HardCleanupAllArrows()
+    {
+        Debug.Log("[Tutorial] HARD CLEANUP TRIGGERED");
+
+        // 1. static arrows (Inspector assigned)
+        if (arrowObjects != null)
+        {
+            foreach (var a in arrowObjects)
+            {
+                if (a != null)
+                {
+                    a.SetActive(false);
+                    Debug.Log("[Tutorial] Static arrow OFF → " + a.name);
+                }
+            }
+        }
+
+        // 2. runtime registered arrows (QuestCard / prefabs)
+        foreach (var obj in runtimeArrows)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(false);
+                Debug.Log("[Tutorial] Runtime arrow OFF → " + obj.name);
+            }
+        }
+
+        runtimeArrows.Clear();
+
+        // 3. SAFE GLOBAL SCAN (ONLY Prefab_Arrow)
+        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+
+        int found = 0;
+        int disabled = 0;
+
+        foreach (GameObject obj in allObjects)
+        {
+            if (obj == null) continue;
+
+            if (obj.name.ToLower().Contains("prefab_arrow"))
+            {
+                found++;
+
+                if (obj.activeSelf)
+                {
+                    obj.SetActive(false);
+                    disabled++;
+                    Debug.Log("[Tutorial] GLOBAL FORCE OFF → " + obj.name);
+                }
+                else
+                {
+                    Debug.Log("[Tutorial] GLOBAL ALREADY OFF → " + obj.name);
+                }
+            }
+        }
+
+        Debug.Log($"[Tutorial] Prefab_Arrow scan done | Found: {found} | Disabled: {disabled}");
     }
 }

@@ -311,6 +311,14 @@ public class NPC : MonoBehaviour
         DialogSystem.Instance.CloseAllPanels();
         SaveProgress();
         Debug.Log("<color=white>[NPC GAMELOG]</color> Conversation ended.");
+
+        if (TutorialController.Instance != null)
+        {
+            TutorialController.Instance.ResetArrowsOnConversationEnd();
+        }
+
+        TutorialController.Instance.HardCleanupAllArrows();
+        TutorialController.Instance.OnConversationEnd();
     }
 
     public bool HasCooldown(string missionID)
