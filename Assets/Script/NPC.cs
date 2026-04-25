@@ -319,6 +319,7 @@ public class NPC : MonoBehaviour
 
         TutorialController.Instance.HardCleanupAllArrows();
         TutorialController.Instance.OnConversationEnd();
+        QuestCard.DisableActiveQuestArrow();
     }
 
     public bool HasCooldown(string missionID)

@@ -210,38 +210,20 @@ public class TutorialController : MonoBehaviour
 
     public void HideArrowUI()
     {
-        Debug.Log("[Tutorial] HideArrowUI CALLED");
-
         if (arrowAnim != null)
         {
             StopCoroutine(arrowAnim);
             arrowAnim = null;
-            Debug.Log("[Tutorial] Animation STOPPED");
         }
 
         currentArrow = null;
 
-        // ✅ STATIC ARROWS ONLY
-        if (arrowObjects != null)
-        {
-            foreach (var a in arrowObjects)
-            {
-                if (a != null)
-                {
-                    a.SetActive(false);
-                    Debug.Log("[Tutorial] Static arrow OFF → " + a.name);
-                }
-            }
-        }
+        if (arrowObjects == null) return;
 
-        // ✅ RUNTIME ARROWS (QUEST CARDS)
-        foreach (var obj in runtimeArrows)
+        foreach (var a in arrowObjects)
         {
-            if (obj != null)
-            {
-                obj.SetActive(false);
-                Debug.Log("[Tutorial] Runtime arrow OFF → " + obj.name);
-            }
+            if (a != null)
+                a.SetActive(false);
         }
     }
    
@@ -266,7 +248,7 @@ public class TutorialController : MonoBehaviour
     {
         Debug.Log("[Tutorial] HARD CLEANUP TRIGGERED");
 
-        // 1. static arrows (Inspector assigned)
+        // 1. static arrows
         if (arrowObjects != null)
         {
             foreach (var a in arrowObjects)
@@ -279,7 +261,7 @@ public class TutorialController : MonoBehaviour
             }
         }
 
-        // 2. runtime registered arrows (QuestCard / prefabs)
+        // 2. runtime arrows (REAL FIX)
         foreach (var obj in runtimeArrows)
         {
             if (obj != null)
@@ -291,33 +273,24 @@ public class TutorialController : MonoBehaviour
 
         runtimeArrows.Clear();
 
-        // 3. SAFE GLOBAL SCAN (ONLY Prefab_Arrow)
-        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+        // ❌ REMOVE THIS COMPLETELY (ITO SUMISIRA)
+        // FindObjectsOfType + Contains("row")
+    }
 
-        int found = 0;
-        int disabled = 0;
+    public void DisableAllQuestCardArrows()
+    {
+        QuestCard[] cards = FindObjectsOfType<QuestCard>();
 
-        foreach (GameObject obj in allObjects)
+        foreach (var card in cards)
         {
-            if (obj == null) continue;
-
-            if (obj.name.ToLower().Contains("prefab_arrow"))
+            if (card != null)
             {
-                found++;
-
-                if (obj.activeSelf)
-                {
-                    obj.SetActive(false);
-                    disabled++;
-                    Debug.Log("[Tutorial] GLOBAL FORCE OFF → " + obj.name);
-                }
-                else
-                {
-                    Debug.Log("[Tutorial] GLOBAL ALREADY OFF → " + obj.name);
-                }
+                card.DisableArrow();
             }
         }
 
-        Debug.Log($"[Tutorial] Prefab_Arrow scan done | Found: {found} | Disabled: {disabled}");
+        runtimeArrows.Clear();
+
+        Debug.Log("[Tutorial] ALL QuestCard arrows disabled cleanly");
     }
-}
+    }

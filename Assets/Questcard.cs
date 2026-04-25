@@ -20,6 +20,8 @@ public class QuestCard : MonoBehaviour
     private float cooldownTimer = 0f;
     private bool isCooldown = false;
 
+    private static Transform activeArrowRef;
+
     public void Setup(QuestInfo info, NPC npc, bool canAccept)
     {
         currentInfo = info;
@@ -77,35 +79,31 @@ public class QuestCard : MonoBehaviour
 
     Transform arrowRef;
 
-    void OnEnable()
-    {
-        if (TutorialController.Instance != null)
-        {
-            arrowRef = transform.Find("Prefab_Arrow");
 
-            if (arrowRef != null)
+    public static void DisableActiveQuestArrow()
+    {
+        if (activeArrowRef != null)
+        {
+            activeArrowRef.gameObject.SetActive(false);
+            Debug.Log("[QuestCard] FORCE DISABLE Prefab_Arrow → " + activeArrowRef.name);
+
+            if (TutorialController.Instance != null)
             {
-                Debug.Log("[QuestCard] REGISTER arrow → " + arrowRef.name);
-                TutorialController.Instance.RegisterRuntimeArrow(arrowRef.gameObject);
+                TutorialController.Instance.UnregisterRuntimeArrow(activeArrowRef.gameObject);
             }
-            else
-            {
-                Debug.LogError("[QuestCard] ❌ NO Prefab_Arrow FOUND");
-            }
+
+            activeArrowRef = null;
         }
     }
 
-    void OnDisable()
+    public void DisableArrow()
     {
-        if (TutorialController.Instance != null)
-        {
-            Transform arrow = transform.Find("Prefab_Arrow");
+        Transform arrow = transform.Find("Prefab_Arrow");
 
-            if (arrow != null)
-            {
-                Debug.Log("[QuestCard] UNREGISTER arrow → " + arrow.name);
-                TutorialController.Instance.UnregisterRuntimeArrow(arrow.gameObject);
-            }
+        if (arrow != null)
+        {
+            arrow.gameObject.SetActive(false);
+            Debug.Log("[QuestCard] FORCE DISABLE Prefab_Arrow → " + arrow.name);
         }
     }
 
