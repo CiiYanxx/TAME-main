@@ -314,12 +314,15 @@ public class NPC : MonoBehaviour
 
         if (TutorialController.Instance != null)
         {
-            TutorialController.Instance.ResetArrowsOnConversationEnd();
+            TutorialController.Instance.OnConversationEnd();
         }
 
-        TutorialController.Instance.HardCleanupAllArrows();
-        TutorialController.Instance.OnConversationEnd();
-        QuestCard.DisableActiveQuestArrow();
+        if (TutorialController.Instance != null)
+        {
+            TutorialController.Instance.OnConversationEnd();
+        }
+
+        Debug.Log("<color=red>[NPC]</color> Ending conversation → triggering arrow cleanup");
     }
 
     public bool HasCooldown(string missionID)

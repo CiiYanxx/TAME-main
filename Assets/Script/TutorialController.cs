@@ -25,13 +25,10 @@ public class TutorialController : MonoBehaviour
     private bool waitingForContinue = false;
     private bool readyForNextStep = true;
 
-    private RectTransform currentArrow;
     private Coroutine arrowAnim;
 
-    // 🔥 GLOBAL LOCK
     private bool arrowsLocked = false;
 
-    // 🔥 RUNTIME ARROWS (FIX FOR PREFAB ISSUE)
     private List<GameObject> runtimeArrows = new List<GameObject>();
 
     void Awake()
@@ -61,9 +58,6 @@ public class TutorialController : MonoBehaviour
         HideArrowUI();
     }
 
-    // =========================
-    // PANEL SYSTEM
-    // =========================
     void ShowPanel(int index)
     {
         HideAll();
@@ -150,25 +144,40 @@ public class TutorialController : MonoBehaviour
     public void Tutorial2_Interact() { if (stepTriggered[1]) Show(2); }
 
     // =========================
-    // STATIC ARROWS
+    // STATIC ARROW SYSTEM
     // =========================
+
     public void ShowArrowOnIndex(int index)
     {
-        if (arrowsLocked) return;
+        if (arrowsLocked)
+        {
+            Debug.Log("[Tutorial] Arrow blocked (locked)");
+            return;
+        }
 
         HideArrowUI();
 
-        if (arrowObjects == null || index >= arrowObjects.Length) return;
+        if (arrowObjects == null || index >= arrowObjects.Length)
+        {
+            Debug.LogWarning("[Tutorial] Invalid arrow index: " + index);
+            return;
+        }
 
         GameObject arrow = arrowObjects[index];
-        if (arrow == null) return;
+        if (arrow == null)
+        {
+            Debug.LogWarning("[Tutorial] Arrow is NULL at index " + index);
+            return;
+        }
+
+        Debug.Log("[Tutorial] STATIC ARROW SPAWN → " + arrow.name);
 
         arrow.SetActive(true);
 
-        currentArrow = arrow.GetComponent<RectTransform>();
+        RectTransform rect = arrow.GetComponent<RectTransform>();
 
-        if (currentArrow != null)
-            arrowAnim = StartCoroutine(BounceArrow(currentArrow));
+        if (rect != null)
+            arrowAnim = StartCoroutine(BounceArrow(rect));
     }
 
     IEnumerator BounceArrow(RectTransform arrow)
@@ -177,12 +186,7 @@ public class TutorialController : MonoBehaviour
 
         while (true)
         {
-            // 🔥 FIX: check if destroyed
-            if (arrow == null)
-            {
-                Debug.Log("[Tutorial] Arrow destroyed → stopping coroutine");
-                yield break;
-            }
+            if (arrow == null) yield break;
 
             float bounce = Mathf.Sin(Time.unscaledTime * 5f) * 10f;
             arrow.anchoredPosition = startPos + new Vector2(0, bounce);
@@ -192,105 +196,84 @@ public class TutorialController : MonoBehaviour
     }
 
     // =========================
-    // 🔥 RUNTIME ARROWS FIX (QUESTCARD PREFABS)
+    // RUNTIME ARROWS (QUESTCARD)
     // =========================
+
     public void RegisterRuntimeArrow(GameObject obj)
     {
         if (obj == null) return;
 
         if (!runtimeArrows.Contains(obj))
+        {
             runtimeArrows.Add(obj);
+            Debug.Log("[Tutorial] REGISTER runtime arrow → " + obj.name);
+        }
     }
 
     public void UnregisterRuntimeArrow(GameObject obj)
     {
         if (runtimeArrows.Contains(obj))
+        {
             runtimeArrows.Remove(obj);
+            Debug.Log("[Tutorial] UNREGISTER runtime arrow → " + obj.name);
+        }
     }
 
     public void HideArrowUI()
     {
+        Debug.Log("[Tutorial] HideArrowUI CALLED");
+
         if (arrowAnim != null)
         {
             StopCoroutine(arrowAnim);
             arrowAnim = null;
         }
 
-        currentArrow = null;
-
-        if (arrowObjects == null) return;
-
-        foreach (var a in arrowObjects)
+        if (arrowObjects != null)
         {
-            if (a != null)
-                a.SetActive(false);
+            foreach (var a in arrowObjects)
+            {
+                if (a != null && a.activeSelf)
+                {
+                    Debug.Log("[Tutorial] STATIC OFF → " + a.name);
+                    a.SetActive(false);
+                }
+            }
         }
+
+        for (int i = 0; i < runtimeArrows.Count; i++)
+        {
+            if (runtimeArrows[i] != null)
+            {
+                Debug.Log("[Tutorial] RUNTIME OFF → " + runtimeArrows[i].name);
+                runtimeArrows[i].SetActive(false);
+            }
+        }
+
+        runtimeArrows.Clear();
     }
-   
+
     public void OnConversationEnd()
     {
+        Debug.Log("[Tutorial] Conversation ended cleanup");
+
         arrowsLocked = true;
-        HideArrowUI();
-    }
 
-    public void ForceHideAndReset()
-    {
         HideArrowUI();
-        currentIndex = -1;
-    }
 
-    public void ResetArrowsOnConversationEnd()
-    {
-        OnConversationEnd();
+        runtimeArrows.Clear();
     }
 
     public void HardCleanupAllArrows()
     {
         Debug.Log("[Tutorial] HARD CLEANUP TRIGGERED");
 
-        // 1. static arrows
-        if (arrowObjects != null)
-        {
-            foreach (var a in arrowObjects)
-            {
-                if (a != null)
-                {
-                    a.SetActive(false);
-                    Debug.Log("[Tutorial] Static arrow OFF → " + a.name);
-                }
-            }
-        }
-
-        // 2. runtime arrows (REAL FIX)
-        foreach (var obj in runtimeArrows)
-        {
-            if (obj != null)
-            {
-                obj.SetActive(false);
-                Debug.Log("[Tutorial] Runtime arrow OFF → " + obj.name);
-            }
-        }
+        HideArrowUI();
 
         runtimeArrows.Clear();
 
-        // ❌ REMOVE THIS COMPLETELY (ITO SUMISIRA)
-        // FindObjectsOfType + Contains("row")
+        arrowsLocked = true;
+
+        Debug.Log("[Tutorial] HARD CLEANUP DONE");
     }
-
-    public void DisableAllQuestCardArrows()
-    {
-        QuestCard[] cards = FindObjectsOfType<QuestCard>();
-
-        foreach (var card in cards)
-        {
-            if (card != null)
-            {
-                card.DisableArrow();
-            }
-        }
-
-        runtimeArrows.Clear();
-
-        Debug.Log("[Tutorial] ALL QuestCard arrows disabled cleanly");
-    }
-    }
+}

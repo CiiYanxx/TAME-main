@@ -20,8 +20,12 @@ public class QuestCard : MonoBehaviour
     private float cooldownTimer = 0f;
     private bool isCooldown = false;
 
-    private static Transform activeArrowRef;
+    // 🔥 ARROW SYSTEM
+    private GameObject arrowObj;
 
+    // =========================
+    // SETUP
+    // =========================
     public void Setup(QuestInfo info, NPC npc, bool canAccept)
     {
         currentInfo = info;
@@ -42,6 +46,7 @@ public class QuestCard : MonoBehaviour
                 btn.onClick.RemoveAllListeners();
                 btn.onClick.AddListener(() =>
                 {
+                    Debug.Log($"[QuestCard] ACCEPT CLICKED → {info.questTitle}");
                     DialogSystem.Instance.OpenMissionPreview(currentInfo, currentNpc);
                 });
             }
@@ -51,6 +56,9 @@ public class QuestCard : MonoBehaviour
         RefreshUI();
     }
 
+    // =========================
+    // UPDATE TIMER
+    // =========================
     void Update()
     {
         if (!isCooldown) return;
@@ -64,6 +72,8 @@ public class QuestCard : MonoBehaviour
         {
             isCooldown = false;
             RefreshUI();
+
+            Debug.Log($"[QuestCard] COOLDOWN ENDED → {currentInfo?.questTitle}");
         }
     }
 
@@ -77,36 +87,42 @@ public class QuestCard : MonoBehaviour
         return minutes > 0 ? $"{minutes}m {seconds:00}s" : $"{seconds}s";
     }
 
-    Transform arrowRef;
+    // =========================
+    // ARROW SYSTEM
+    // =========================
 
-
-    public static void DisableActiveQuestArrow()
+    void OnEnable()
     {
-        if (activeArrowRef != null)
+        arrowObj = transform.Find("Prefab_Arrow")?.gameObject;
+
+        if (arrowObj != null)
         {
-            activeArrowRef.gameObject.SetActive(false);
-            Debug.Log("[QuestCard] FORCE DISABLE Prefab_Arrow → " + activeArrowRef.name);
+            Debug.Log($"[QuestCard][Arrow] SPAWN → {arrowObj.name} | Parent: {gameObject.name}");
 
-            if (TutorialController.Instance != null)
-            {
-                TutorialController.Instance.UnregisterRuntimeArrow(activeArrowRef.gameObject);
-            }
-
-            activeArrowRef = null;
+            TutorialController.Instance?.RegisterRuntimeArrow(arrowObj);
+        }
+        else
+        {
+            Debug.LogWarning($"[QuestCard][Arrow] MISSING Prefab_Arrow → {gameObject.name}");
         }
     }
 
-    public void DisableArrow()
+    void OnDisable()
     {
-        Transform arrow = transform.Find("Prefab_Arrow");
-
-        if (arrow != null)
+        if (arrowObj != null)
         {
-            arrow.gameObject.SetActive(false);
-            Debug.Log("[QuestCard] FORCE DISABLE Prefab_Arrow → " + arrow.name);
+            Debug.Log($"[QuestCard][Arrow] DISABLE → {arrowObj.name} | Parent: {gameObject.name}");
+
+            TutorialController.Instance?.UnregisterRuntimeArrow(arrowObj);
+
+            arrowObj.SetActive(false);
+            arrowObj = null;
         }
     }
 
+    // =========================
+    // UI REFRESH
+    // =========================
     public void RefreshUI()
     {
         if (currentInfo == null || currentNpc == null) return;
@@ -133,6 +149,8 @@ public class QuestCard : MonoBehaviour
 
             Button btn = timerButtonObj.GetComponent<Button>();
             if (btn != null) btn.interactable = false;
+
+            Debug.Log($"[QuestCard] COOLDOWN ACTIVE → {missionID}");
         }
         else
         {
@@ -140,6 +158,9 @@ public class QuestCard : MonoBehaviour
         }
     }
 
+    // =========================
+    // COOLDOWN CHECK
+    // =========================
     void CheckCooldownFromNPC()
     {
         if (currentNpc == null || currentInfo == null) return;
@@ -154,14 +175,21 @@ public class QuestCard : MonoBehaviour
             {
                 cooldownTimer = remaining;
                 isCooldown = true;
+
+                Debug.Log($"[QuestCard] INIT COOLDOWN → {missionID} ({remaining}s)");
             }
         }
     }
 
+    // =========================
+    // EXTERNAL CALL
+    // =========================
     public void StartCooldown(float seconds)
     {
         cooldownTimer = seconds;
         isCooldown = true;
         RefreshUI();
+
+        Debug.Log($"[QuestCard] START COOLDOWN → {seconds}s");
     }
 }
