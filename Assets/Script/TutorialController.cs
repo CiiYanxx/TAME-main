@@ -7,14 +7,33 @@ public class TutorialController : MonoBehaviour
 {
     public static TutorialController Instance;
 
+    [System.Serializable]
+    public class ArrowAnimationSettings
+    {
+        public enum MoveType
+        {
+            UpDown,
+            LeftRight,
+            DiagonalUpRight,
+            DiagonalUpLeft,
+            Circular,
+            None
+        }
+
+        public MoveType moveType = MoveType.UpDown;
+        public float speed = 5f;
+        public float distance = 10f;
+        public bool useUnscaledTime = true;
+    }
+
     public GameObject overlay;
     public GameObject[] panels;
 
-    [Header("Multi-Target Arrow System (UI OBJECTS)")]
-    public RectTransform[] targetButtons;
-
-    [Header("Arrow UI Objects (ASSIGN PER INDEX, DEFAULT OFF)")]
+    [Header("Arrow UI Objects (Same Index as Panels)")]
     public GameObject[] arrowObjects;
+
+    [Header("Per Arrow Animation Settings")]
+    public ArrowAnimationSettings[] arrowSettings;
 
     private const string TUTORIAL_KEY = "Tutorial_Completed";
 
@@ -26,7 +45,6 @@ public class TutorialController : MonoBehaviour
     private bool readyForNextStep = true;
 
     private Coroutine arrowAnim;
-
     private bool arrowsLocked = false;
 
     private List<GameObject> runtimeArrows = new List<GameObject>();
@@ -50,10 +68,12 @@ public class TutorialController : MonoBehaviour
 
     void HideAll()
     {
-        if (overlay != null) overlay.SetActive(false);
+        if (overlay != null)
+            overlay.SetActive(false);
 
         foreach (var p in panels)
-            if (p != null) p.SetActive(false);
+            if (p != null)
+                p.SetActive(false);
 
         HideArrowUI();
     }
@@ -120,7 +140,10 @@ public class TutorialController : MonoBehaviour
         readyForNextStep = true;
     }
 
-    public void Skip() => CompleteTutorial();
+    public void Skip()
+    {
+        CompleteTutorial();
+    }
 
     void CompleteTutorial()
     {
@@ -139,64 +162,117 @@ public class TutorialController : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    // =========================
+    // TUTORIAL FLOW
+    // =========================
+
     public void Tutorial0_Joystick() => Show(0);
-    public void Tutorial1_Swipe() { if (stepTriggered[0]) Show(1); }
-    public void Tutorial2_Interact() { if (stepTriggered[1]) Show(2); }
+
+    public void Tutorial1_Swipe()
+    {
+        if (stepTriggered[0]) Show(1);
+    }
+
+    public void Tutorial2_Interact()
+    {
+        if (stepTriggered[1]) Show(2);
+    }
+
+    public void Tutorial3_HintPanel()
+    {
+        if (stepTriggered[2])
+            StartCoroutine(ShowHintPanelDelay());
+    }
+
+    IEnumerator ShowHintPanelDelay()
+    {
+        yield return new WaitForSeconds(5f);
+        Show(3);
+    }
 
     // =========================
-    // STATIC ARROW SYSTEM
+    // ARROW SYSTEM
     // =========================
 
     public void ShowArrowOnIndex(int index)
     {
-        if (arrowsLocked)
-        {
-            Debug.Log("[Tutorial] Arrow blocked (locked)");
-            return;
-        }
+        if (arrowsLocked) return;
 
         HideArrowUI();
 
-        if (arrowObjects == null || index >= arrowObjects.Length)
-        {
-            Debug.LogWarning("[Tutorial] Invalid arrow index: " + index);
-            return;
-        }
+        if (arrowObjects == null) return;
+        if (index < 0 || index >= arrowObjects.Length) return;
 
         GameObject arrow = arrowObjects[index];
-        if (arrow == null)
-        {
-            Debug.LogWarning("[Tutorial] Arrow is NULL at index " + index);
-            return;
-        }
-
-        Debug.Log("[Tutorial] STATIC ARROW SPAWN → " + arrow.name);
+        if (arrow == null) return;
 
         arrow.SetActive(true);
 
         RectTransform rect = arrow.GetComponent<RectTransform>();
-
         if (rect != null)
-            arrowAnim = StartCoroutine(BounceArrow(rect));
+            arrowAnim = StartCoroutine(AnimateArrow(rect, index));
     }
 
-    IEnumerator BounceArrow(RectTransform arrow)
+    IEnumerator AnimateArrow(RectTransform arrow, int index)
     {
         Vector2 startPos = arrow.anchoredPosition;
 
+        ArrowAnimationSettings settings = null;
+
+        if (arrowSettings != null && index < arrowSettings.Length)
+            settings = arrowSettings[index];
+
+        if (settings == null)
+            yield break;
+
         while (true)
         {
-            if (arrow == null) yield break;
+            if (arrow == null)
+                yield break;
 
-            float bounce = Mathf.Sin(Time.unscaledTime * 5f) * 10f;
-            arrow.anchoredPosition = startPos + new Vector2(0, bounce);
+            float t = settings.useUnscaledTime ? Time.unscaledTime : Time.time;
+            float wave = Mathf.Sin(t * settings.speed) * settings.distance;
+
+            Vector2 offset = Vector2.zero;
+
+            switch (settings.moveType)
+            {
+                case ArrowAnimationSettings.MoveType.UpDown:
+                    offset = new Vector2(0, wave);
+                    break;
+
+                case ArrowAnimationSettings.MoveType.LeftRight:
+                    offset = new Vector2(wave, 0);
+                    break;
+
+                case ArrowAnimationSettings.MoveType.DiagonalUpRight:
+                    offset = new Vector2(wave, wave);
+                    break;
+
+                case ArrowAnimationSettings.MoveType.DiagonalUpLeft:
+                    offset = new Vector2(-wave, wave);
+                    break;
+
+                case ArrowAnimationSettings.MoveType.Circular:
+                    offset = new Vector2(
+                        Mathf.Cos(t * settings.speed) * settings.distance,
+                        Mathf.Sin(t * settings.speed) * settings.distance
+                    );
+                    break;
+
+                case ArrowAnimationSettings.MoveType.None:
+                    offset = Vector2.zero;
+                    break;
+            }
+
+            arrow.anchoredPosition = startPos + offset;
 
             yield return null;
         }
     }
 
     // =========================
-    // RUNTIME ARROWS (QUESTCARD)
+    // RUNTIME ARROWS
     // =========================
 
     public void RegisterRuntimeArrow(GameObject obj)
@@ -204,25 +280,17 @@ public class TutorialController : MonoBehaviour
         if (obj == null) return;
 
         if (!runtimeArrows.Contains(obj))
-        {
             runtimeArrows.Add(obj);
-            Debug.Log("[Tutorial] REGISTER runtime arrow → " + obj.name);
-        }
     }
 
     public void UnregisterRuntimeArrow(GameObject obj)
     {
         if (runtimeArrows.Contains(obj))
-        {
             runtimeArrows.Remove(obj);
-            Debug.Log("[Tutorial] UNREGISTER runtime arrow → " + obj.name);
-        }
     }
 
     public void HideArrowUI()
     {
-        Debug.Log("[Tutorial] HideArrowUI CALLED");
-
         if (arrowAnim != null)
         {
             StopCoroutine(arrowAnim);
@@ -232,22 +300,14 @@ public class TutorialController : MonoBehaviour
         if (arrowObjects != null)
         {
             foreach (var a in arrowObjects)
-            {
-                if (a != null && a.activeSelf)
-                {
-                    Debug.Log("[Tutorial] STATIC OFF → " + a.name);
+                if (a != null)
                     a.SetActive(false);
-                }
-            }
         }
 
         for (int i = 0; i < runtimeArrows.Count; i++)
         {
             if (runtimeArrows[i] != null)
-            {
-                Debug.Log("[Tutorial] RUNTIME OFF → " + runtimeArrows[i].name);
                 runtimeArrows[i].SetActive(false);
-            }
         }
 
         runtimeArrows.Clear();
@@ -255,25 +315,21 @@ public class TutorialController : MonoBehaviour
 
     public void OnConversationEnd()
     {
-        Debug.Log("[Tutorial] Conversation ended cleanup");
-
         arrowsLocked = true;
 
         HideArrowUI();
 
         runtimeArrows.Clear();
+
+        arrowsLocked = false;
+
+        Tutorial3_HintPanel();
     }
 
     public void HardCleanupAllArrows()
     {
-        Debug.Log("[Tutorial] HARD CLEANUP TRIGGERED");
-
         HideArrowUI();
-
         runtimeArrows.Clear();
-
         arrowsLocked = true;
-
-        Debug.Log("[Tutorial] HARD CLEANUP DONE");
     }
 }
