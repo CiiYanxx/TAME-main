@@ -21,7 +21,8 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
 
     private Vector2 inputVector = Vector2.zero;
     private Vector2 defaultPosition; // Original position ng 'Center'
-    private Vector2 currentVelocity;
+    private Vector2 bgVelocity;
+    private Vector2 handleVelocity;
     private bool isPressed = false;
     private Image backImage, handleImage;
     private Coroutine scaleRoutine;
@@ -43,14 +44,23 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
 
     void Update()
     {
-        // Smoothly ibalik ang 'Center' sa defaultPosition at ang 'Stick' sa zero
         if (!isPressed && background)
         {
-            background.anchoredPosition = Vector2.SmoothDamp(background.anchoredPosition, defaultPosition, ref currentVelocity, returnSmoothTime);
-            handle.anchoredPosition = Vector2.SmoothDamp(handle.anchoredPosition, Vector2.zero, ref currentVelocity, returnSmoothTime);
+            background.anchoredPosition = Vector2.SmoothDamp(
+                background.anchoredPosition,
+                defaultPosition,
+                ref bgVelocity,
+                returnSmoothTime
+            );
+
+            handle.anchoredPosition = Vector2.SmoothDamp(
+                handle.anchoredPosition,
+                Vector2.zero,
+                ref handleVelocity,
+                returnSmoothTime
+            );
         }
     }
-
     public void OnPointerDown(PointerEventData eventData)
     {
         isPressed = true;
@@ -110,5 +120,17 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
             yield return null;
         }
         background.localScale = targetScale;
+    }
+
+    public void ResetJoystick()
+    {
+        isPressed = false;
+        inputVector = Vector2.zero;
+
+        if (background)
+            background.anchoredPosition = defaultPosition;
+
+        if (handle)
+            handle.anchoredPosition = Vector2.zero;
     }
 }

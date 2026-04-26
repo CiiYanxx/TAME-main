@@ -43,6 +43,8 @@ public class AnimalMissionLogic : MonoBehaviour
 
     private bool hintConsumed = false;
 
+    public PlayerMovement playerMovement;
+
 
     private bool feedingTriggered = false; // 🔥 IMPORTANT FIX
 
@@ -203,14 +205,8 @@ public class AnimalMissionLogic : MonoBehaviour
                 feedingTriggered = true;
                 currentStep = MissionStep.Feeding;
 
-                if (disableMovementAtFullTrust &&
-                    PlayerMovement.Instance != null)
-                {
-                    PlayerMovement.Instance.canControl = false;
-
-                    if (moveJoystickObject != null)
-                        moveJoystickObject.SetActive(false);
-                }
+                if (RescueController.Instance != null)
+                    RescueController.Instance.OnFullTrustReached();
 
                 StartCoroutine(TransitionToFeedingSequence());
             }

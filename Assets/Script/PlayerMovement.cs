@@ -424,4 +424,11 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void DoAutoSave() { }
+    
+    public void HardStopMovement()
+    {
+        if (controller == null) return;
+
+        anim.SetFloat("Speed", 0f);
+    }
 }

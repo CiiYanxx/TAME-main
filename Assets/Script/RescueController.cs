@@ -25,6 +25,10 @@ public class RescueController : MonoBehaviour
     [Header("Settings & Prefabs")]
     public List<GameObject> animalPrefabs = new List<GameObject>();
 
+    [Header("Player Controls")]
+    public GameObject moveJoystick;
+    public GameObject lookJoystick;
+
     public float foodForwardOffset = 1.5f;
     public float foodVerticalOffset = 0.1f;
 
@@ -52,6 +56,13 @@ public class RescueController : MonoBehaviour
 
         activeNPC = npc;
         currentInfo = info;
+
+        // ✅ ENABLE PLAYER CONTROLS (NEW MISSION RESET)
+        if (moveJoystick != null)
+            moveJoystick.SetActive(true);
+
+        if (lookJoystick != null)
+            lookJoystick.SetActive(true);
 
         if (sneakButton != null)
             sneakButton.SetActive(true);
@@ -122,7 +133,6 @@ public class RescueController : MonoBehaviour
         if (success && currentInfo != null)
         {
             var points = FindFirstObjectByType<RescuePointsHandler>();
-
             if (points != null)
                 points.AddPoints(currentInfo.progressPointsReward);
         }
@@ -139,10 +149,11 @@ public class RescueController : MonoBehaviour
         if (feedButton != null)
             feedButton.gameObject.SetActive(false);
 
+        // ❗ RESTORE CONTROL HERE (NOT EARLY)
+        RestorePlayerControls();
+
         if (!success)
-        {
             ShowFailDialog();
-        }
 
         StartCoroutine(CleanupAfterDelay());
     }
@@ -225,4 +236,45 @@ public class RescueController : MonoBehaviour
         if (obj.GetComponent<Collider>() == null)
             obj.AddComponent<BoxCollider>();
     }
+
+    public void OnFullTrustReached()
+    {
+        if (moveJoystick != null)
+            moveJoystick.SetActive(false);
+
+        if (lookJoystick != null)
+            lookJoystick.SetActive(false);
+
+        // ✅ ADD THIS RESET PART
+        if (moveJoystick != null)
+        {
+            var joy = moveJoystick.GetComponent<VirtualJoystick>();
+            if (joy != null)
+                joy.ResetJoystick();
+        }
+
+        if (PlayerMovement.Instance != null)
+        {
+            PlayerMovement.Instance.canControl = false;
+            PlayerMovement.Instance.HardStopMovement();
+        }
+    }
+
+    private void RestorePlayerControls()
+    {
+        // reset joystick UI
+        if (moveJoystick != null)
+            moveJoystick.SetActive(true);
+
+        if (lookJoystick != null)
+            lookJoystick.SetActive(true);
+
+        // reset player input state
+        if (PlayerMovement.Instance != null)
+        {
+            PlayerMovement.Instance.canControl = true;
+        }
+    }
+
+    
 }
