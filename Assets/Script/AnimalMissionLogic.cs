@@ -23,6 +23,11 @@ public class AnimalMissionLogic : MonoBehaviour
 
     public float trustBufferDistance = 2f;
 
+
+    [Header("Movement Lock On Full Trust")]
+    public bool disableMovementAtFullTrust = true;
+    public GameObject moveJoystickObject;
+
     private Vector3 currentTarget;
     private Vector3 spawnPoint;
     private GameObject spawnedFoodBowl;
@@ -36,44 +41,65 @@ public class AnimalMissionLogic : MonoBehaviour
     private bool missionStarted = false;
     private bool hasTouchedRadius = false;
 
+    private bool hintConsumed = false;
+
 
     private bool feedingTriggered = false; // 🔥 IMPORTANT FIX
 
     public void SetupMission(QuestInfo info)
     {
         missionData = info;
+
         animalInteract = GetComponent<AnimalInteractable>();
         animalMover = GetComponent<CreatureMover>();
 
+        // Reset mission states
+        hintConsumed = false;
+        meterValue = 0f;
+        currentStep = MissionStep.Waiting;
+        missionStarted = true;
+        hasTouchedRadius = false;
+        feedingTriggered = false;
+
+        // Show hint ONLY when mission starts
         if (RescueController.Instance != null)
         {
+            RescueController.Instance.HideHint(); // clean reset
             RescueController.Instance.ShowHint(info.missionHint);
+            RescueController.Instance.UpdateNoiseMeter(false, Color.white, 0f);
         }
 
+        // Get player reference
         if (PlayerMovement.Instance != null)
+        {
             playerTransform = PlayerMovement.Instance.transform;
+        }
         else
-            playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
 
+            if (player != null)
+                playerTransform = player.transform;
+        }
+
+        // Save spawn point
         spawnPoint = transform.position;
 
+        // Setup animal interaction
         if (animalInteract != null)
             animalInteract.SetupQuest(info);
 
-        if (RescueController.Instance.feedButton != null)
+        // Reset feed button
+        if (RescueController.Instance != null &&
+            RescueController.Instance.feedButton != null)
         {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
             RescueController.Instance.feedButton.onClick.RemoveAllListeners();
             RescueController.Instance.feedButton.onClick.AddListener(OnFeedButtonPressed);
         }
 
+        // Start roaming
         PickNewTarget();
-
-        meterValue = 0f;
-        currentStep = MissionStep.Waiting;
-        missionStarted = true;
-        hasTouchedRadius = false;
-        feedingTriggered = false;
     }
 
     public void OnPlayerInteract()
@@ -96,13 +122,9 @@ public class AnimalMissionLogic : MonoBehaviour
         if (RescueController.Instance != null)
         {
             if (insideRadius)
-            {
                 RescueController.Instance.HideHint();
-            }
             else
-            {
                 RescueController.Instance.ShowHint(missionData.missionHint);
-            }
         }
 
         if (currentStep == MissionStep.Waiting || currentStep == MissionStep.BuildTrust)
@@ -180,6 +202,16 @@ public class AnimalMissionLogic : MonoBehaviour
             {
                 feedingTriggered = true;
                 currentStep = MissionStep.Feeding;
+
+                if (disableMovementAtFullTrust &&
+                    PlayerMovement.Instance != null)
+                {
+                    PlayerMovement.Instance.canControl = false;
+
+                    if (moveJoystickObject != null)
+                        moveJoystickObject.SetActive(false);
+                }
+
                 StartCoroutine(TransitionToFeedingSequence());
             }
         }
@@ -189,6 +221,9 @@ public class AnimalMissionLogic : MonoBehaviour
     {
         missionStarted = false;
 
+        if (RescueController.Instance != null)
+            RescueController.Instance.HideHint();
+
         CleanupFoodBowl();
 
         if (PlayerMovement.Instance != null && PlayerMovement.Instance.isSneaking)
@@ -196,10 +231,7 @@ public class AnimalMissionLogic : MonoBehaviour
 
         if (animalInteract != null)
             animalInteract.ReportMissionOutcome(false);
-
-        RescueController.Instance.ReportMissionOutcome(false);
     }
-  
     private void LookAtPlayer()
     {
         Vector3 direction = (playerTransform.position - transform.position).normalized;
@@ -260,7 +292,10 @@ public class AnimalMissionLogic : MonoBehaviour
             RescueController.Instance.sneakButton.SetActive(false);
 
         if (RescueController.Instance.feedButton != null)
-            RescueController.Instance.feedButton.gameObject.SetActive(true);
+        RescueController.Instance.feedButton.gameObject.SetActive(true);
+
+        if (PlayerMovement.Instance != null)
+        PlayerMovement.Instance.canControl = true;
     }
 
     public void OnFeedButtonPressed()

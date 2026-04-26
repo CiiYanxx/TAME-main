@@ -130,6 +130,9 @@ public class AnimalInteractable : MonoBehaviour
             // Fail if player enters not sneaking
             if (inside && !PlayerMovement.Instance.isSneaking)
             {
+                if (RescueController.Instance != null)
+                    RescueController.Instance.HideHint();
+
                 ReportMissionOutcome(false);
                 return;
             }
