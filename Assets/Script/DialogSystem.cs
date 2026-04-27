@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class DialogSystem : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class DialogSystem : MonoBehaviour
     public TextMeshProUGUI dialogText;
     public Button option1BTN; 
     public Button option2BTN; 
+
+    [Header("Typing Effect")]
+    public float typingSpeed = 0.02f;
+    private string fullText;
+    private Coroutine typingCoroutine;
 
     [Header("2nd Step: Mission Preview Panel")]
     public GameObject previewPanel;
@@ -84,8 +90,10 @@ public class DialogSystem : MonoBehaviour
         {
             backToNPCBTN.onClick.AddListener(() =>
             {
-                if (NPC.Instance != null) NPC.Instance.EndConversation();
-                else CloseAllPanels();
+                if (NPC.Instance != null)
+                    NPC.Instance.ShowExitDialogue();
+                else
+                    CloseAllPanels();
             });
         }
     }
@@ -267,4 +275,32 @@ public class DialogSystem : MonoBehaviour
         }
     }
 
+    public void SetDialogText(string text)
+    {
+        if (typingCoroutine != null)
+            StopCoroutine(typingCoroutine);
+
+        typingCoroutine = StartCoroutine(TypeText(text));
+    }
+
+    IEnumerator TypeText(string text)
+    {
+        dialogText.text = "";
+
+        bool isInsideTag = false;
+
+        foreach (char c in text)
+        {
+            if (c == '<')
+                isInsideTag = true;
+
+            dialogText.text += c;
+
+            if (!isInsideTag)
+                yield return new WaitForSeconds(typingSpeed);
+
+            if (c == '>')
+                isInsideTag = false;
+        }
+    }
 }

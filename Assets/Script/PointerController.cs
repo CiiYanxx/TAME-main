@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class PointerController : MonoBehaviour
 {
@@ -14,6 +15,12 @@ public class PointerController : MonoBehaviour
     [Header("Counter Displays (Numbers Only)")]
     public TextMeshProUGUI successText; 
     public TextMeshProUGUI failText;    
+
+    [Header("Typing Effect")]
+    public float typingSpeed = 0.015f;
+
+    private Coroutine typingCoroutine;
+    private string fullText;
 
     [Header("Outcome Panel References")]
     public GameObject outcomePanel; 
@@ -37,6 +44,16 @@ public class PointerController : MonoBehaviour
     private RectTransform pointerTransform;
     private AnimalInteractable animalInteractable;
 
+    private enum TameState
+    {
+        None,
+        Ready,
+        Playing
+    }
+
+    private TameState currentState = TameState.None;
+    
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -55,13 +72,35 @@ public class PointerController : MonoBehaviour
     {
         animalInteractable = caller;
         ToggleMainControls(false); 
-        if (tameButton != null) tameButton.gameObject.SetActive(true);
+
+        if (tameButton != null)
+        {
+            tameButton.gameObject.SetActive(true);
+
+            tameButton.onClick.RemoveAllListeners();
+            tameButton.onClick.AddListener(OnTameButtonClicked);
+        }
+
+        currentState = TameState.Ready;
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.Tutorial7_Tame();
     }
 
     private void OnTameButtonClicked()
     {
-        if (tameButton != null) tameButton.gameObject.SetActive(false);
-        StartMinigame();
+        if (currentState == TameState.Ready)
+        {
+            // ✅ TRIGGER TUTORIAL 8
+            if (TutorialController.Instance != null)
+                TutorialController.Instance.Tutorial8_Minigame();
+
+            StartMinigame();
+        }
+        else if (currentState == TameState.Playing)
+        {
+            AttemptRescue();
+        }
     }
 
     public void ToggleMainControls(bool state)
@@ -82,8 +121,7 @@ public class PointerController : MonoBehaviour
     public void StartMinigame()
     {
         if (travelAreaRect != null) travelRange = travelAreaRect.rect.width;
-        
-        // DITO NATIN KINUKUHA LAHAT SA QUEST INFO
+
         if (animalInteractable != null && animalInteractable.currentQuest != null)
         {
             QuestInfo q = animalInteractable.currentQuest;
@@ -93,7 +131,6 @@ public class PointerController : MonoBehaviour
         }
         else
         {
-            // Emergency Fallback kung sakaling walang QuestInfo
             attemptsRequired = 5;
             maxFailedAttempts = 3;
             moveSpeed = 300f;
@@ -102,13 +139,23 @@ public class PointerController : MonoBehaviour
         successfulAttempts = 0; 
         failedAttemptsCount = 0;
         isActive = true;
+
         minigameUIContainer.SetActive(true);
+
+        // ❗ IMPORTANT: wag mo na itago button
+        tameButton.gameObject.SetActive(true);
+
+        // 🔥 Change role
+        tameButton.onClick.RemoveAllListeners();
+        tameButton.onClick.AddListener(OnTameButtonClicked);
+
+        currentState = TameState.Playing;
+
         pointerTransform.localPosition = new Vector3(0f, pointerTransform.localPosition.y, 0f); 
         
         UpdateCounterUI(); 
         RandomizeSafeZonePosition();
     }
-    
     public void AttemptRescue()
     {
         if (!isActive) return;
@@ -154,12 +201,21 @@ public class PointerController : MonoBehaviour
     private void EndMinigame(bool missionSuccess)
     {
         if (!isActive) return;
+
         isActive = false;
         lastResultWasSuccess = missionSuccess;
+
         minigameUIContainer.SetActive(false);
-        
-        if (animalInteractable != null) animalInteractable.ReportMissionOutcome(missionSuccess);
-        
+
+        // ❗ hide button after game
+        if (tameButton != null)
+            tameButton.gameObject.SetActive(false);
+
+        currentState = TameState.None;
+
+        if (animalInteractable != null)
+            animalInteractable.ReportMissionOutcome(missionSuccess);
+
         ShowOutcomeFirstDialog();
     }
 
@@ -168,9 +224,9 @@ public class PointerController : MonoBehaviour
         if (outcomePanel == null) return;
         
         if (lastResultWasSuccess) 
-            outcomeText.text = "Congratulations!\nYou successfully rescue the stray animal!";
+            SetOutcomeText("Congratulations!\nYou successfully rescue the stray animal!");
         else 
-            outcomeText.text = "Oh no!\nYou scared away the stray animal!";
+            SetOutcomeText("Oh no!\nYou scared away the stray animal!");
 
         outcomePanel.SetActive(true); 
         outcomeContinueBtn.onClick.RemoveAllListeners();
@@ -179,8 +235,8 @@ public class PointerController : MonoBehaviour
 
     private void ShowOutcomeSecondDialog() 
     { 
-        if (lastResultWasSuccess) outcomeText.text = "Go back to Dr. Kevin so he can assess the rescued animal and check their condition";
-        else outcomeText.text = "Go back to Dr. Kevin to restart the rescue mission";
+        if (lastResultWasSuccess) SetOutcomeText("Go back to Dr. Kevin so he can assess the rescued animal and check their condition");
+        else SetOutcomeText("Go back to Dr. Kevin to restart the rescue mission");
 
         outcomeContinueBtn.onClick.RemoveAllListeners();
         outcomeContinueBtn.onClick.AddListener(CloseOutcomePanel);
@@ -202,5 +258,33 @@ public class PointerController : MonoBehaviour
     private void ResetPointerAndAdvance() { 
         pointerTransform.localPosition = new Vector3(0f, pointerTransform.localPosition.y, 0f); 
         RandomizeSafeZonePosition(); 
+    }
+
+    public void SetOutcomeText(string text)
+    {
+        if (typingCoroutine != null)
+            StopCoroutine(typingCoroutine);
+
+        fullText = text;
+        typingCoroutine = StartCoroutine(TypeText(text));
+    }
+
+    IEnumerator TypeText(string text)
+    {
+        outcomeText.text = "";
+
+        bool isInsideTag = false;
+
+        foreach (char c in text)
+        {
+            if (c == '<') isInsideTag = true;
+
+            outcomeText.text += c;
+
+            if (!isInsideTag)
+                yield return new WaitForSeconds(typingSpeed);
+
+            if (c == '>') isInsideTag = false;
+        }
     }
 }

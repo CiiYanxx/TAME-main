@@ -99,7 +99,6 @@ public class TutorialController : MonoBehaviour
 
     void Show(int index)
     {
-        if (arrowsLocked) return;
         if (PlayerPrefs.GetInt(TUTORIAL_KEY, 0) == 1) return;
         if (index < 0 || index >= panels.Length) return;
         if (stepTriggered[index]) return;
@@ -129,6 +128,8 @@ public class TutorialController : MonoBehaviour
     {
         if (!waitingForContinue) return;
 
+        int closedPanel = currentIndex;
+
         HideAll();
 
         Time.timeScale = 1f;
@@ -138,8 +139,13 @@ public class TutorialController : MonoBehaviour
 
         waitingForContinue = false;
         readyForNextStep = true;
-    }
 
+        // If Sneak tutorial closed
+        if (closedPanel == 4)
+        {
+            StartCoroutine(Tutorial5TrustDelay());
+        }
+    }
     public void Skip()
     {
         CompleteTutorial();
@@ -170,9 +176,18 @@ public class TutorialController : MonoBehaviour
 
     public void Tutorial1_Swipe()
     {
-        if (stepTriggered[0]) Show(1);
+        if (stepTriggered[0])
+        {
+            Show(1);
+            StartCoroutine(Tutorial2Delay());
+        }
     }
+    IEnumerator Tutorial2Delay()
+    {
+        yield return new WaitForSecondsRealtime(2f); // pwede mo adjust
 
+        Tutorial2_Interact();
+    }
     public void Tutorial2_Interact()
     {
         if (stepTriggered[1]) Show(2);
@@ -186,8 +201,56 @@ public class TutorialController : MonoBehaviour
 
     IEnumerator ShowHintPanelDelay()
     {
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(2.5f);
         Show(3);
+    }
+
+        public void Tutorial4_Sneak()
+    {
+        // once triggered auto disable forever
+        if (stepTriggered[4]) return;
+
+        // optional chain after tutorial3
+        if (stepTriggered[3])
+            Show(4);
+    }
+
+    public void Tutorial5_Trust()
+    {
+        if (stepTriggered[5]) return;
+
+        if (stepTriggered[4])
+            StartCoroutine(Tutorial5TrustDelay());
+    }
+
+    IEnumerator Tutorial5TrustDelay()
+    {
+        yield return new WaitForSecondsRealtime(0.5f);
+        Show(5);
+    }
+
+    public void Tutorial6_Feed()
+    {
+        if (stepTriggered[6]) return;
+
+        if (stepTriggered[5])
+            Show(6);
+    }
+
+    public void Tutorial7_Tame()
+    {
+        if (stepTriggered[7]) return;
+
+        if (stepTriggered[6])
+            Show(7);
+    }
+
+    public void Tutorial8_Minigame()
+    {
+        if (stepTriggered[8]) return;
+
+        if (stepTriggered[7])
+            Show(8);
     }
 
     // =========================
@@ -196,7 +259,7 @@ public class TutorialController : MonoBehaviour
 
     public void ShowArrowOnIndex(int index)
     {
-        if (arrowsLocked) return;
+        if (arrowsLocked) return; // already exists, good
 
         HideArrowUI();
 
@@ -320,8 +383,6 @@ public class TutorialController : MonoBehaviour
         HideArrowUI();
 
         runtimeArrows.Clear();
-
-        arrowsLocked = false;
 
         Tutorial3_HintPanel();
     }

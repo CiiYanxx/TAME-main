@@ -176,8 +176,6 @@ public class NPC : MonoBehaviour
         if (sqrDist <= sqrLimit)
         {
             playerInRange = true;
-            if (TutorialController.Instance != null)
-                TutorialController.Instance.Tutorial2_Interact();
         }
         else
         {
@@ -207,9 +205,9 @@ public class NPC : MonoBehaviour
         // FLOW CHECK: MISSION RETURNED
         if (missionReturned)
         {
-            DialogSystem.Instance.dialogText.text = lastMissionWasSuccess
-                ? $"Kevin: Thank you {coloredPlayerName}!"
-                : $"Kevin: Oh no! Try again?";
+            DialogSystem.Instance.SetDialogText(lastMissionWasSuccess
+            ? $"<color=#2B7B98>Dr. Kevin:</color> Hey {coloredPlayerName}, you did it! I'll start assessing it now and check its condition carefully. Would you like to rescue more?"
+            : $"<color=#2B7B98>Dr. Kevin:</color> Hmm… that didn’t go well. Want to try again?");
 
             SetupOption1("Continue", () =>
             {
@@ -222,7 +220,7 @@ public class NPC : MonoBehaviour
         // FLOW CHECK: CURRENTLY ON MISSION
         if (active != null)
         {
-            DialogSystem.Instance.dialogText.text = $"Kevin: {coloredPlayerName} please finish your mission.";
+            DialogSystem.Instance.SetDialogText($"<color=#2B7B98>Dr. Kevin:</color> Hey {coloredPlayerName}, you're still on a rescue mission. Please be careful.");
             SetupOption1("I'm on it!", EndConversation);
             return;
         }
@@ -237,7 +235,7 @@ public class NPC : MonoBehaviour
         else
         {
             Debug.Log("<color=orange>[NPC GAMELOG]</color> Intro skipped (Missions already done).");
-            DialogSystem.Instance.dialogText.text = $"Kevin: Hello {coloredPlayerName}! Ready for a new mission?";
+            DialogSystem.Instance.SetDialogText($"<color=#2B7B98>Dr. Kevin:</color> Good day {coloredPlayerName}! Are you ready for a new rescue mission?");
             SetupOption1("Continue", ShowLocationSelection);
         }
     }
@@ -248,10 +246,21 @@ public class NPC : MonoBehaviour
 
         switch (introStep)
         {
-            case 0: DialogSystem.Instance.dialogText.text = "Hi welcome to Stray Ville, I'm Kevin."; break;
-            case 1: DialogSystem.Instance.dialogText.text = $"You: I'm {coloredPlayerName}."; break;
-            case 2: DialogSystem.Instance.dialogText.text = "Kevin: We need your help!"; break;
-            case 3: DialogSystem.Instance.dialogText.text = "Kevin: Choose your mission."; break;
+            case 0:
+                DialogSystem.Instance.SetDialogText("Hi, welcome to Stray Ville. I'm <color=#2B7B98>Dr. Kevin</color>, your Local Veterinarian here.");
+                break;
+
+            case 1:
+                DialogSystem.Instance.SetDialogText($"Hello, I'm {coloredPlayerName}. Nice to meet you.");
+                break;
+
+            case 2:
+                DialogSystem.Instance.SetDialogText("<color=#2B7B98>Dr. Kevin:</color> Good. We really need someone like you right now.");
+                break;
+
+            case 3:
+                DialogSystem.Instance.SetDialogText("<color=#2B7B98>Dr. Kevin:</color> Let's start with your first rescue mission. Choose area to rescue.");
+                break;
         }
 
         SetupOption1("Next", () => 
@@ -275,7 +284,7 @@ public class NPC : MonoBehaviour
         Debug.Log($"<color=cyan>[NPC GAMELOG]</color> Mission Accepted: {info.targetAnimalName}");
 
         DialogSystem.Instance.OpenDialogUI();
-        DialogSystem.Instance.dialogText.text = "Kevin: Good luck!";
+        DialogSystem.Instance.SetDialogText("<color=#2B7B98>Dr. Kevin:</color> Good luck! Stay safe out there");
 
         SetupOption1("Continue", () =>
         {
@@ -337,5 +346,17 @@ public class NPC : MonoBehaviour
         if (!missionCooldowns.ContainsKey(missionID)) return 0f;
 
         return Mathf.Max(0, missionCooldowns[missionID] - Time.time);
+    }
+
+    public void ShowExitDialogue()
+    {
+        if (DialogSystem.Instance == null) return;
+
+        DialogSystem.Instance.OpenDialogUI();
+
+        DialogSystem.Instance.SetDialogText(
+            $"<color=#2B7B98>Dr. Kevin:</color> You've done enough for now, {coloredPlayerName}. Take a rest and come back when you're ready.");
+
+        SetupOption1("Leave", EndConversation);
     }
 }

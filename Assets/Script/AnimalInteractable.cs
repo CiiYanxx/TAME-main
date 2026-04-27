@@ -12,6 +12,11 @@ public class AnimalInteractable : MonoBehaviour
     public float runAwayDuration = 3.5f;
     public float runAwayDistance = 40f;
 
+    [Header("Tutorial 4 Sneak Trigger")]
+    public bool enableSneakTutorialTrigger = true;
+    public float tutorial4TriggerRadius = 8f;   // adjust sa inspector
+    public bool triggerOnlyOnce = true;
+
     [Header("Emote Prefabs")]
     public GameObject angryEmotePrefab;
     public GameObject sneakEnterPrefab;
@@ -22,7 +27,7 @@ public class AnimalInteractable : MonoBehaviour
 
     [Header("Emote Rotation Animation")]
     public bool rotateEmote360 = true;
-    public float emoteRotateSpeed = 180f; // degrees per second
+    public float emoteRotateSpeed = 180f;
 
     [Header("Circle Visual Settings")]
     public float circleYOffset = 0.1f;
@@ -39,6 +44,7 @@ public class AnimalInteractable : MonoBehaviour
     private bool isFailing = false;
     private bool sneakTriggered = false;
     private bool fullTrustTriggered = false;
+    private bool tutorial4Triggered = false;
 
     private GameObject activeEmote;
 
@@ -52,6 +58,7 @@ public class AnimalInteractable : MonoBehaviour
         isFailing = false;
         sneakTriggered = false;
         fullTrustTriggered = false;
+        tutorial4Triggered = false;
 
         if (activeEmote != null)
             Destroy(activeEmote);
@@ -102,10 +109,26 @@ public class AnimalInteractable : MonoBehaviour
         if (isFailing || currentQuest == null || missionLogic == null || PlayerMovement.Instance == null)
             return;
 
-        float distance = Vector3.Distance(
-            transform.position,
-            PlayerMovement.Instance.transform.position
-        );
+        Transform player = PlayerMovement.Instance.transform;
+
+        float distance = Vector3.Distance(transform.position, player.position);
+
+        // =========================
+        // TUTORIAL 4 SNEAK TRIGGER
+        // =========================
+        if (enableSneakTutorialTrigger && !tutorial4Triggered)
+        {
+            if (distance <= tutorial4TriggerRadius)
+            {
+                tutorial4Triggered = true;
+
+                if (TutorialController.Instance != null)
+                    TutorialController.Instance.Tutorial4_Sneak();
+
+                if (!triggerOnlyOnce)
+                    tutorial4Triggered = false;
+            }
+        }
 
         bool inside = distance <= currentQuest.detectionRadius;
 
@@ -127,7 +150,6 @@ public class AnimalInteractable : MonoBehaviour
         {
             Color circleColor = neutralColor;
 
-            // Fail if player enters not sneaking
             if (inside && !PlayerMovement.Instance.isSneaking)
             {
                 if (RescueController.Instance != null)
@@ -137,7 +159,6 @@ public class AnimalInteractable : MonoBehaviour
                 return;
             }
 
-            // Trust color transition
             if (inside && PlayerMovement.Instance.isSneaking)
             {
                 float max = currentQuest.detectionRadius;
@@ -154,7 +175,6 @@ public class AnimalInteractable : MonoBehaviour
             HideCircle();
         }
 
-        // Full trust emote
         if (missionLogic.currentStep == AnimalMissionLogic.MissionStep.Feeding &&
             !fullTrustTriggered)
         {

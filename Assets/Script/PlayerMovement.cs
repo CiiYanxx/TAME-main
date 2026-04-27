@@ -8,6 +8,37 @@ public class PlayerMovement : MonoBehaviour
 {
     public static PlayerMovement Instance { get; private set; }
 
+    [Header("Extra Intro Cameras")]
+    public GameObject mainCameraObj;   // drag your MAIN camera here
+    public List<IntroCameraShot> introCameraShots = new List<IntroCameraShot>();
+
+    [Header("Screen Fade")]
+    public Image fadeImage;
+    public float fadeSpeed = 1.5f;
+
+    [System.Serializable]
+    public class IntroCameraShot
+    {
+        public Camera cam;
+
+        public enum MoveDirection
+        {
+            None,
+            Right,
+            Left,
+            Up,
+            Down,
+            Forward,
+            Backward
+        }
+    
+    [Header("Movement Settings")]
+    public MoveDirection moveDirection = MoveDirection.Right;
+    public float moveAmount = 0.5f;
+    public float moveSpeed = 1f;
+    public float holdTime = 2f;
+}
+
     [Header("Input & Camera References")]
     public VirtualJoystick moveJoystick; 
     public FixedTouchField touchField; 
@@ -16,10 +47,19 @@ public class PlayerMovement : MonoBehaviour
     public CharacterCustomizer customizer;
     public GameObject mainCanvas;
 
+
+    [Header("Intro Welcome Image")]
+    public Image welcomeImage;
+
+    public float welcomeDelay = 2f;
+    public float welcomeStayTime = 3f;
+
+
     [Header("Sneak Settings")]
     public bool isSneaking = false; 
     public float sneakSpeed = 2.0f; 
     public bool isRunning = false;  
+
 
     [Header("Bus Cinematic Settings")]
     public GameObject busPrefab;
@@ -27,20 +67,24 @@ public class PlayerMovement : MonoBehaviour
     public float busSpeed = 12f;
     public float waitAtStopDuration = 5f;
 
+
     [Header("Camera Waypoint Settings")]
     public List<Transform> introWaypoints = new List<Transform>(); 
     public float flySpeed = 15.0f;
+
 
     [Header("Character Spawn Settings")]
     public List<GameObject> objectsToHide = new List<GameObject>();
     public float playerSpawnDelay = 4.0f; 
     [SerializeField] private Vector3 defaultSpawnPosition = new Vector3(165.94f, 0f, 142.88f);
 
+
     [Header("Movement & Camera Settings")]
     public float moveSpeed = 5f, orbitRotationSpeed = 10f, sensitivity = 0.15f;
     public float minPitch = 1f, maxPitch = 30f;
     public LayerMask collisionLayers; 
     public float collisionRadius = 0.4f, minCollisionDistance = 0.8f, cameraSmoothSpeed = 15f;
+
 
     private CharacterController controller;
     private Animator anim;
@@ -133,15 +177,18 @@ public class PlayerMovement : MonoBehaviour
         transform.position = defaultSpawnPosition;
         if (controller != null) controller.enabled = true;
 
-        // Simulan ang Cinematic
+    
         cinematicCoroutine = StartCoroutine(PlayFullCinematicMaster());
+        
     }
 
   IEnumerator PlayFullCinematicMaster()
     {
+        yield return StartCoroutine(PlayIntroCameraShots());
         canControl = false;
 
         StartCoroutine(MoveBusSequence());
+        StartCoroutine(ShowWelcomeImage());
         StartCoroutine(DelayedPlayerShow());
 
         foreach (Transform wp in introWaypoints)
@@ -163,10 +210,11 @@ public class PlayerMovement : MonoBehaviour
                 yield return null;
             }
         }
-
+        
         yield return StartCoroutine(ReturnToDefaultView());
 
         cameraFullyReset = true;
+
 
         yield return null;
 
@@ -252,7 +300,7 @@ public class PlayerMovement : MonoBehaviour
         while (!cameraFullyReset)
             yield return null;
 
-        yield return new WaitForSecondsRealtime(0.3f);
+        yield return new WaitForSecondsRealtime(0f);
 
         TutorialController.Instance.Tutorial0_Joystick();
     }
@@ -431,4 +479,137 @@ public class PlayerMovement : MonoBehaviour
 
         anim.SetFloat("Speed", 0f);
     }
+
+    IEnumerator PlayIntroCameraShots()
+    {
+        if (mainCameraObj != null)
+            mainCameraObj.SetActive(false);
+
+        foreach (IntroCameraShot shot in introCameraShots)
+        {
+            if (shot.cam == null) continue;
+
+            shot.cam.gameObject.SetActive(true);
+
+            Vector3 startPos = shot.cam.transform.position;
+
+            Vector3 direction = Vector3.zero;
+
+            switch (shot.moveDirection)
+        {
+            case IntroCameraShot.MoveDirection.Right:
+                direction = shot.cam.transform.right;
+                break;
+
+            case IntroCameraShot.MoveDirection.Left:
+                direction = -shot.cam.transform.right;
+                break;
+
+            case IntroCameraShot.MoveDirection.Up:
+                direction = shot.cam.transform.up;
+                break;
+
+            case IntroCameraShot.MoveDirection.Down:
+                direction = -shot.cam.transform.up;
+                break;
+
+            case IntroCameraShot.MoveDirection.Forward:
+                direction = shot.cam.transform.forward;
+                break;
+
+            case IntroCameraShot.MoveDirection.Backward:
+                direction = -shot.cam.transform.forward;
+                break;
+        }
+
+            float timer = 0f;
+
+            // FADE IN
+            yield return StartCoroutine(Fade(0f));
+
+                while (timer < shot.holdTime)
+                {
+                    timer += Time.deltaTime;
+
+                    if (shot.moveDirection != IntroCameraShot.MoveDirection.None)
+                    {
+                        float t = timer * shot.moveSpeed;
+
+                        shot.cam.transform.position = startPos + direction * t;
+                    }
+
+                    yield return null;
+                }
+
+            // FADE OUT
+            yield return StartCoroutine(Fade(1f));
+
+            shot.cam.gameObject.SetActive(false);
+        }
+
+        if (mainCameraObj != null)
+            mainCameraObj.SetActive(true);
+
+        yield return StartCoroutine(Fade(0f));
+    }
+    IEnumerator CameraDrift(Camera cam, float duration)
+    {
+        Vector3 startPos = cam.transform.position;
+
+        float timer = 0f;
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+
+            float offsetX = Mathf.Sin(Time.time * 0.5f) * 0.3f;
+            float offsetY = Mathf.Cos(Time.time * 0.3f) * 0.2f;
+
+            cam.transform.position = startPos + new Vector3(offsetX, offsetY, 0f);
+
+            yield return null;
+        }
+    }
+
+    IEnumerator Fade(float targetAlpha)
+    {
+        if (fadeImage == null) yield break;
+
+        Color c = fadeImage.color;
+
+        while (!Mathf.Approximately(c.a, targetAlpha))
+        {
+            c.a = Mathf.MoveTowards(c.a, targetAlpha, Time.deltaTime * fadeSpeed);
+            fadeImage.color = c;
+            yield return null;
+        }
+    }
+
+    IEnumerator ShowWelcomeImage()
+    {
+        Debug.Log("[WELCOME] STARTED at time: " + Time.time);
+
+        if (welcomeImage == null)
+        {
+            Debug.LogWarning("[WELCOME] welcomeImage is NULL");
+            yield break;
+        }
+
+        // 🔥 delay bago mag show
+        yield return new WaitForSeconds(welcomeDelay);
+
+        Debug.Log("[WELCOME] SHOWING image");
+
+        welcomeImage.gameObject.SetActive(true);
+
+        // 🔥 stay duration
+        yield return new WaitForSeconds(welcomeStayTime);
+
+        Debug.Log("[WELCOME] HIDING image at time: " + Time.time);
+
+        welcomeImage.gameObject.SetActive(false);
+
+        Debug.Log("[WELCOME] ENDED at time: " + Time.time);
+    }
+    
 }

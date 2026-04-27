@@ -87,43 +87,7 @@ public class QuestCard : MonoBehaviour
         return minutes > 0 ? $"{minutes}m {seconds:00}s" : $"{seconds}s";
     }
 
-    // =========================
-    // ARROW SYSTEM
-    // =========================
-
-    void OnEnable()
-    {
-        arrowObj = transform.Find("Prefab_Arrow")?.gameObject;
-
-        if (arrowObj != null)
-        {
-            Debug.Log($"[QuestCard][Arrow] SPAWN → {arrowObj.name} | Parent: {gameObject.name}");
-
-            TutorialController.Instance?.RegisterRuntimeArrow(arrowObj);
-        }
-        else
-        {
-            Debug.LogWarning($"[QuestCard][Arrow] MISSING Prefab_Arrow → {gameObject.name}");
-        }
-    }
-
-    void OnDisable()
-    {
-        if (arrowObj != null)
-        {
-            Debug.Log($"[QuestCard][Arrow] DISABLE → {arrowObj.name} | Parent: {gameObject.name}");
-
-            TutorialController.Instance?.UnregisterRuntimeArrow(arrowObj);
-
-            arrowObj.SetActive(false);
-            arrowObj = null;
-        }
-    }
-
-    // =========================
-    // UI REFRESH
-    // =========================
-    public void RefreshUI()
+     public void RefreshUI()
     {
         if (currentInfo == null || currentNpc == null) return;
 

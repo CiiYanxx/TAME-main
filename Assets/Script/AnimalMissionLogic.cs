@@ -41,11 +41,7 @@ public class AnimalMissionLogic : MonoBehaviour
     private bool missionStarted = false;
     private bool hasTouchedRadius = false;
 
-    private bool hintConsumed = false;
-
-    public PlayerMovement playerMovement;
-
-
+    
     private bool feedingTriggered = false; // 🔥 IMPORTANT FIX
 
     public void SetupMission(QuestInfo info)
@@ -56,7 +52,7 @@ public class AnimalMissionLogic : MonoBehaviour
         animalMover = GetComponent<CreatureMover>();
 
         // Reset mission states
-        hintConsumed = false;
+        
         meterValue = 0f;
         currentStep = MissionStep.Waiting;
         missionStarted = true;
@@ -199,7 +195,6 @@ public class AnimalMissionLogic : MonoBehaviour
                 RescueController.Instance.UpdateNoiseMeter(true, stateColor, meterValue);
             }
 
-            // ❌ FIXED: REMOVED DISTANCE REQUIREMENT
             if (meterValue >= 1f && !feedingTriggered)
             {
                 feedingTriggered = true;
@@ -207,6 +202,9 @@ public class AnimalMissionLogic : MonoBehaviour
 
                 if (RescueController.Instance != null)
                     RescueController.Instance.OnFullTrustReached();
+
+                if (TutorialController.Instance != null)
+                    TutorialController.Instance.Tutorial6_Feed();
 
                 StartCoroutine(TransitionToFeedingSequence());
             }

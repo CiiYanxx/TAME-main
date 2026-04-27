@@ -61,6 +61,12 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
             );
         }
     }
+
+    void OnDisable()
+    {
+        ResetJoystick();
+    }
+    
     public void OnPointerDown(PointerEventData eventData)
     {
         isPressed = true;
