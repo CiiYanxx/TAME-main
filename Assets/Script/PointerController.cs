@@ -1,7 +1,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 public class PointerController : MonoBehaviour
 {
@@ -15,12 +14,6 @@ public class PointerController : MonoBehaviour
     [Header("Counter Displays (Numbers Only)")]
     public TextMeshProUGUI successText; 
     public TextMeshProUGUI failText;    
-
-    [Header("Typing Effect")]
-    public float typingSpeed = 0.015f;
-
-    private Coroutine typingCoroutine;
-    private string fullText;
 
     [Header("Outcome Panel References")]
     public GameObject outcomePanel; 
@@ -224,9 +217,9 @@ public class PointerController : MonoBehaviour
         if (outcomePanel == null) return;
         
         if (lastResultWasSuccess) 
-            SetOutcomeText("Congratulations!\nYou successfully rescue the stray animal!");
+            outcomeText.text = "Congratulations!\nYou successfully rescue the stray animal!";
         else 
-            SetOutcomeText("Oh no!\nYou scared away the stray animal!");
+            outcomeText.text = "Oh no!\nYou scared away the stray animal!";
 
         outcomePanel.SetActive(true); 
         outcomeContinueBtn.onClick.RemoveAllListeners();
@@ -235,8 +228,8 @@ public class PointerController : MonoBehaviour
 
     private void ShowOutcomeSecondDialog() 
     { 
-        if (lastResultWasSuccess) SetOutcomeText("Go back to Dr. Kevin so he can assess the rescued animal and check their condition");
-        else SetOutcomeText("Go back to Dr. Kevin to restart the rescue mission");
+        if (lastResultWasSuccess) outcomeText.text = "Go back to Dr. Kevin so he can assess the rescued animal and check their condition";
+        else outcomeText.text = "Go back to Dr. Kevin to restart the rescue mission";
 
         outcomeContinueBtn.onClick.RemoveAllListeners();
         outcomeContinueBtn.onClick.AddListener(CloseOutcomePanel);
@@ -258,33 +251,5 @@ public class PointerController : MonoBehaviour
     private void ResetPointerAndAdvance() { 
         pointerTransform.localPosition = new Vector3(0f, pointerTransform.localPosition.y, 0f); 
         RandomizeSafeZonePosition(); 
-    }
-
-    public void SetOutcomeText(string text)
-    {
-        if (typingCoroutine != null)
-            StopCoroutine(typingCoroutine);
-
-        fullText = text;
-        typingCoroutine = StartCoroutine(TypeText(text));
-    }
-
-    IEnumerator TypeText(string text)
-    {
-        outcomeText.text = "";
-
-        bool isInsideTag = false;
-
-        foreach (char c in text)
-        {
-            if (c == '<') isInsideTag = true;
-
-            outcomeText.text += c;
-
-            if (!isInsideTag)
-                yield return new WaitForSeconds(typingSpeed);
-
-            if (c == '>') isInsideTag = false;
-        }
     }
 }
