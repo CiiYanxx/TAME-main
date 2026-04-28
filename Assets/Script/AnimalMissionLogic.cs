@@ -52,19 +52,23 @@ public class AnimalMissionLogic : MonoBehaviour
         animalMover = GetComponent<CreatureMover>();
 
         // Reset mission states
-        
         meterValue = 0f;
         currentStep = MissionStep.Waiting;
         missionStarted = true;
+
         hasTouchedRadius = false;
         feedingTriggered = false;
 
-        // Show hint ONLY when mission starts
+        // Clean UI reset first
         if (RescueController.Instance != null)
         {
-            RescueController.Instance.HideHint(); // clean reset
-            RescueController.Instance.ShowHint(info.missionHint);
-            RescueController.Instance.UpdateNoiseMeter(false, Color.white, 0f);
+            RescueController.Instance.HideHint();
+
+            RescueController.Instance.UpdateNoiseMeter(
+                false,
+                Color.white,
+                0f
+            );
         }
 
         // Get player reference
@@ -92,14 +96,25 @@ public class AnimalMissionLogic : MonoBehaviour
             RescueController.Instance.feedButton != null)
         {
             RescueController.Instance.feedButton.gameObject.SetActive(false);
+
             RescueController.Instance.feedButton.onClick.RemoveAllListeners();
+
             RescueController.Instance.feedButton.onClick.AddListener(OnFeedButtonPressed);
         }
 
         // Start roaming
         PickNewTarget();
-    }
 
+        // 🔥 SHOW UI ONLY AFTER FULL SETUP
+        if (RescueController.Instance != null)
+        {
+            RescueController.Instance.ShowHint(info.missionHint);
+
+            if (RescueController.Instance.sneakButton != null)
+                Debug.Log("<color=cyan>[SNEAK DEBUG]</color> SNEAK BUTTON ON");
+                RescueController.Instance.sneakButton.SetActive(true);
+        }
+    }
     public void OnPlayerInteract()
     {
         if (currentStep == MissionStep.Feeding)
@@ -283,6 +298,7 @@ public class AnimalMissionLogic : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         if (RescueController.Instance.sneakButton != null)
+            Debug.Log("<color=red>[SNEAK DEBUG]</color> SNEAK BUTTON OFF");
             RescueController.Instance.sneakButton.SetActive(false);
 
         if (RescueController.Instance.feedButton != null)

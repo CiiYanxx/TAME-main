@@ -410,7 +410,11 @@ public class TutorialController : MonoBehaviour
 
         runtimeArrows.Clear();
 
-        Tutorial3_HintPanel();
+        // 🔥 ONLY continue tutorial if mission is actually active
+        if (PlayerPrefs.GetInt("IsMissionActive", 0) == 1)
+        {
+            Tutorial3_HintPanel();
+        }
     }
 
     public void HardCleanupAllArrows()

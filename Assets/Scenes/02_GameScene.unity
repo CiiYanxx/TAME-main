@@ -76978,9 +76978,6 @@ MonoBehaviour:
   - {fileID: 1814539494}
   - {fileID: 1100618467}
   - {fileID: 1725282460}
-  - {fileID: 204465941}
-  - {fileID: 936318707}
-  - {fileID: 1830360481}
 --- !u!4 &1673447306
 Transform:
   m_ObjectHideFlags: 0
@@ -83563,14 +83560,6 @@ MonoBehaviour:
   allQuests:
   - {fileID: 11400000, guid: 47a3e396c89ed1744901c1cccb751b8d, type: 2}
   - {fileID: 11400000, guid: dc6d66d0f1b0f1741950fe67bacd951e, type: 2}
-  - {fileID: 11400000, guid: 2128d39da8a9f27478c54e2677ae5a9d, type: 2}
-  - {fileID: 11400000, guid: 4dbc4e5ee7b872b4184394d60ea3d367, type: 2}
-  - {fileID: 11400000, guid: 64120ca0723d7134c88d84e3e05b25f2, type: 2}
-  - {fileID: 11400000, guid: e305031033567714d9bd06a0a1062af3, type: 2}
-  - {fileID: 11400000, guid: e191a194486f07c4f9698cb763e56b9b, type: 2}
-  - {fileID: 11400000, guid: 716894ae17b81df45b87060ee0df3bc0, type: 2}
-  - {fileID: 11400000, guid: c579b361249fa3141b0b31254f062a3d, type: 2}
-  - {fileID: 11400000, guid: 1748d286d5059cc4c97dc6a6890bca95, type: 2}
   - {fileID: 11400000, guid: 5086bb34faffdd34bbdef43a3e7737c7, type: 2}
   totalCompletedMissions: 0
   playerInRange: 0

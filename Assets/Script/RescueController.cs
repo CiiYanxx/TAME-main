@@ -37,7 +37,6 @@ public class RescueController : MonoBehaviour
     private QuestInfo currentInfo = null;
     private AnimalMissionLogic activeMissionLogic;
 
-    private bool lastMissionSuccess = false;
 
     void Awake()
     {
@@ -47,11 +46,22 @@ public class RescueController : MonoBehaviour
         if (failPanel != null)
             failPanel.SetActive(false);
 
-        CleanupMission();
-    }
+        // SAFE UI RESET ONLY
+        if (noiseMeterGroup != null)
+            noiseMeterGroup.SetActive(false);
 
+        if (sneakButton != null)
+            sneakButton.SetActive(false);
+
+        if (feedButton != null)
+            feedButton.gameObject.SetActive(false);
+
+        if (hintPanel != null)
+            hintPanel.SetActive(false);
+    }
     public void StartMission(NPC npc, QuestInfo info)
     {
+        
         CleanupMission();
 
         activeNPC = npc;
@@ -64,11 +74,9 @@ public class RescueController : MonoBehaviour
         if (lookJoystick != null)
             lookJoystick.SetActive(true);
 
-        if (sneakButton != null)
-            sneakButton.SetActive(true);
-
         GameObject prefab = animalPrefabs.Find(
-            p => p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim()
+            p => p != null &&
+            p.name.ToLower().Trim() == info.targetAnimalName.ToLower().Trim()
         );
 
         if (prefab != null)
@@ -111,6 +119,8 @@ public class RescueController : MonoBehaviour
 
     public void ShowHint(string hint)
     {
+        Debug.Log("<color=lime>[HINT DEBUG]</color> SHOW HINT PANEL");
+
         if (hintPanel == null || hintText == null) return;
 
         hintPanel.SetActive(true);
@@ -119,6 +129,8 @@ public class RescueController : MonoBehaviour
 
     public void HideHint()
     {
+        Debug.Log("<color=orange>[HINT DEBUG]</color> HIDE HINT PANEL");
+
         if (hintPanel == null) return;
 
         if (!hintPanel.activeSelf) return;
@@ -126,9 +138,9 @@ public class RescueController : MonoBehaviour
         hintPanel.SetActive(false);
     }
 
+
     public void ReportMissionOutcome(bool success)
     {
-        lastMissionSuccess = success;
 
         if (success && currentInfo != null)
         {
@@ -209,27 +221,40 @@ public class RescueController : MonoBehaviour
 
     public void CleanupMission()
     {
+        Debug.Log("<color=red>[MISSION CLEANUP]</color> CleanupMission called");
+
+        // UI RESET
         if (noiseMeterGroup != null)
             noiseMeterGroup.SetActive(false);
 
         if (sneakButton != null)
+        {
+            Debug.Log("<color=red>[SNEAK DEBUG]</color> SNEAK BUTTON OFF");
             sneakButton.SetActive(false);
+        }
 
         if (feedButton != null)
             feedButton.gameObject.SetActive(false);
 
+        if (hintPanel != null)
+            hintPanel.SetActive(false);
+
         if (noiseMeterFill != null)
             noiseMeterFill.fillAmount = 0f;
 
+        // DESTROY ANIMAL
         if (currentAnimal != null)
             Destroy(currentAnimal);
 
         currentAnimal = null;
         activeMissionLogic = null;
 
+        // SAVE RESET
         PlayerPrefs.SetInt("IsMissionActive", 0);
+
         PlayerPrefs.DeleteKey("ActiveLocIdx");
         PlayerPrefs.DeleteKey("ActiveMissIdx");
+
         PlayerPrefs.Save();
     }
 
