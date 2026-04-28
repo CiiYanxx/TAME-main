@@ -16,17 +16,17 @@ MonoBehaviour:
   animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
   animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
   animalDetails: "DESCRIPTION: This dog is abandon by thier owner.\nBREED: Askal\nAGE:
-    Adult\nCOLOR: Black \nCONDITION: Weak & Hungry\nBEHAVIOR: Lovely but shy\nDIET:
+    Adult\nCOLOR: Orange & White \nCONDITION: Hungry\nBEHAVIOR: Lovely but shy\nDIET:
     Clean Water & Soft Food"
-  missionDescription: 'HINT: "West side of the Animal Center near the big rock"'
-  missionHint: 'HINT: "West side of the Animal Center near the big rock"'
+  missionDescription: 'HINT: "West side of the Animal Center infront of blue house"'
+  missionHint: 'HINT: "West side of the Animal Center in front of blue house"'
   animalPrefab: {fileID: 8062036066302463845, guid: 3f58209a5ec6c804ca156f9962777845, type: 3}
   spawnPosition: {x: 115.3, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 0.2
   foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
-  questTitle: Rescue a Stray Dog
+  questTitle: Rescue a Orange & White Dog
   locationIndex: 0
   missionIndex: 1
   progressPointsReward: 1

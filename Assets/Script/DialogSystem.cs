@@ -161,12 +161,12 @@ public class DialogSystem : MonoBehaviour
             string desc = info.missionDescription;
 
             // kulay green lahat
-            desc = $"<color=#5EFF7A>{desc}</color>";
+            desc = $"<color=#000000>>{desc}</color>";
 
             // pero ibang kulay ang HINT:
             desc = desc.Replace(
                 "HINT:",
-                "</color><color=#000000>HINT:</color><color=#5EFF7A>"
+                "</color><color=#000000>HINT:</color><color=#000000>"
             );
 
             // close final color tag

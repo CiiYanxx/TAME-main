@@ -101,7 +101,7 @@ public class CharacterCustomizer : MonoBehaviour
                          : "Rescue Hero";
 
         // --- GLOBAL COLOR TAG ---
-        string coloredName = $"<color=#0000FF>{rawName}</color>";
+        string coloredName = $"<color=#2B7B98>{rawName}</color>";
         
         PlayerPrefs.SetString("Character_Name", coloredName);
 
