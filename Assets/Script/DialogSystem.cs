@@ -42,8 +42,8 @@ public class DialogSystem : MonoBehaviour
     [Header("Panels")]
     public GameObject locationPanel;
 
-    [Header("Progress Lock")]
-    public int requiredLevelForNextLocation = 10;
+    [Header("Mission Unlock Requirements")]
+    public int[] requiredMissionsPerLocation = new int[3];
 
     private List<GameObject> spawnedRows = new List<GameObject>();
 
@@ -68,12 +68,20 @@ public class DialogSystem : MonoBehaviour
             if (locationCards[i] != null)
             {
                 locationCards[i].onClick.RemoveAllListeners();
+
                 locationCards[i].onClick.AddListener(() =>
                 {
                     Debug.Log("Location Card " + index + " clicked!");
 
-                    int playerLevel = PlayerPrefs.GetInt("Player_Level", 1);
-                    bool locked = playerLevel < (requiredLevelForNextLocation * (index + 1));
+                    int completed = 0;
+
+                    if (NPC.Instance != null)
+                        completed = NPC.Instance.totalCompletedMissions;
+
+                    bool locked = false;
+
+                    if (index < requiredMissionsPerLocation.Length)
+                        locked = completed < requiredMissionsPerLocation[index];
 
                     if (locked)
                     {
@@ -156,6 +164,8 @@ public class DialogSystem : MonoBehaviour
     {
         CloseAllPanels();
         HideTutorialArrow();
+
+        UpdateLocationLocks(); // ADD THIS
 
         locationSelectionPanel.SetActive(true);
         locationPanel.SetActive(true);
@@ -261,18 +271,35 @@ public class DialogSystem : MonoBehaviour
 
     void UpdateLocationLocks()
     {
-        int playerLevel = PlayerPrefs.GetInt("Player_Level", 1);
+
+        int completed = 0;
+
+         if (NPC.Instance != null)
+            completed = NPC.Instance.totalCompletedMissions;
 
         for (int i = 0; i < locationCards.Length; i++)
         {
-            bool locked = playerLevel < (requiredLevelForNextLocation * (i + 1));
+            bool locked = false;
+
+            if (i < requiredMissionsPerLocation.Length)
+                    locked = completed < requiredMissionsPerLocation[i];
 
             if (locationCards[i] != null)
-                locationCards[i].interactable = !locked;
+                    locationCards[i].interactable = !locked;
 
-            if (locationLocks != null && i < locationLocks.Length && locationLocks[i] != null)
+            if (locationLocks != null &&
+                 i < locationLocks.Length &&
+                 locationLocks[i] != null)
+             {
                 locationLocks[i].SetActive(locked);
+            }
         }
+    }
+    
+
+    public void RefreshLocks()
+    {
+        UpdateLocationLocks();
     }
 
     public void SetDialogText(string text)

@@ -133,8 +133,11 @@ public class RescueController : MonoBehaviour
         if (success && currentInfo != null)
         {
             var points = FindFirstObjectByType<RescuePointsHandler>();
+
             if (points != null)
                 points.AddPoints(currentInfo.progressPointsReward);
+
+            StartCoroutine(TriggerTutorial9Delay());
         }
 
         if (activeNPC != null)
@@ -276,5 +279,12 @@ public class RescueController : MonoBehaviour
         }
     }
 
+            IEnumerator TriggerTutorial9Delay()
+    {
+        yield return new WaitForSeconds(1.5f);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.Tutorial9_Rescue();
+    }
     
 }

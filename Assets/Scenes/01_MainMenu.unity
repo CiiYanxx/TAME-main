@@ -183,7 +183,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e56878b64c35e284ea8f92d0edad36d8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7b7f28e80cf3da14e869636a85a4fcb7, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3796,8 +3796,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 11, y: -12}
-  m_SizeDelta: {x: 806.1531, y: 381.69}
+  m_AnchoredPosition: {x: 79, y: -54}
+  m_SizeDelta: {x: 645.1438, y: 279.9249}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1437185696
 MonoBehaviour:
@@ -3813,13 +3813,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 2608010a0e9b2b34991e3941edaf9801, type: 3}
+  m_Texture: {fileID: 2800000, guid: 5aa5d986f49627444a4936fd9497a3b8, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0

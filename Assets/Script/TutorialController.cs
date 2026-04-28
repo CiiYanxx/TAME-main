@@ -29,6 +29,9 @@ public class TutorialController : MonoBehaviour
     public GameObject overlay;
     public GameObject[] panels;
 
+    [Header("Pause Game per Tutorial Panel")]
+    public bool[] pauseOnPanel;
+
     [Header("Arrow UI Objects (Same Index as Panels)")]
     public GameObject[] arrowObjects;
 
@@ -116,7 +119,13 @@ public class TutorialController : MonoBehaviour
 
         ShowPanel(index);
 
-        Time.timeScale = 0f;
+        bool shouldPause = false;
+
+        if (pauseOnPanel != null && index < pauseOnPanel.Length)
+            shouldPause = pauseOnPanel[index];
+
+        if (shouldPause)
+            Time.timeScale = 0f;
 
         if (PlayerMovement.Instance != null)
             PlayerMovement.Instance.canControl = false;
@@ -128,8 +137,6 @@ public class TutorialController : MonoBehaviour
     {
         if (!waitingForContinue) return;
 
-        int closedPanel = currentIndex;
-
         HideAll();
 
         Time.timeScale = 1f;
@@ -140,15 +147,30 @@ public class TutorialController : MonoBehaviour
         waitingForContinue = false;
         readyForNextStep = true;
 
-        // If Sneak tutorial closed
-        if (closedPanel == 4)
-        {
+        if (currentIndex == 4)
             StartCoroutine(Tutorial5TrustDelay());
-        }
     }
-    public void Skip()
+
+    private void RestorePlayerControls()
     {
-        CompleteTutorial();
+        if (PlayerMovement.Instance != null)
+        {
+            PlayerMovement.Instance.canControl = true;
+        }
+
+        if (RescueController.Instance != null)
+        {
+            if (RescueController.Instance.moveJoystick != null)
+                RescueController.Instance.moveJoystick.SetActive(true);
+
+            if (RescueController.Instance.lookJoystick != null)
+                RescueController.Instance.lookJoystick.SetActive(true);
+
+            var joy = RescueController.Instance.moveJoystick.GetComponent<VirtualJoystick>();
+
+            if (joy != null)
+                joy.ResetJoystick();
+        }
     }
 
     void CompleteTutorial()
@@ -182,12 +204,13 @@ public class TutorialController : MonoBehaviour
             StartCoroutine(Tutorial2Delay());
         }
     }
+
     IEnumerator Tutorial2Delay()
     {
-        yield return new WaitForSecondsRealtime(2f); // pwede mo adjust
-
+        yield return new WaitForSecondsRealtime(1f);
         Tutorial2_Interact();
     }
+
     public void Tutorial2_Interact()
     {
         if (stepTriggered[1]) Show(2);
@@ -205,12 +228,10 @@ public class TutorialController : MonoBehaviour
         Show(3);
     }
 
-        public void Tutorial4_Sneak()
+    public void Tutorial4_Sneak()
     {
-        // once triggered auto disable forever
         if (stepTriggered[4]) return;
 
-        // optional chain after tutorial3
         if (stepTriggered[3])
             Show(4);
     }
@@ -253,13 +274,18 @@ public class TutorialController : MonoBehaviour
             Show(8);
     }
 
-    // =========================
-    // ARROW SYSTEM
-    // =========================
+    // 🔥 NEW TUTORIAL 9 = RESCUE SUCCESS
+    public void Tutorial9_Rescue()
+    {
+        if (stepTriggered[9]) return;
+
+        if (stepTriggered[8])
+            Show(9);
+    }
 
     public void ShowArrowOnIndex(int index)
     {
-        if (arrowsLocked) return; // already exists, good
+        if (arrowsLocked) return;
 
         HideArrowUI();
 
@@ -393,4 +419,5 @@ public class TutorialController : MonoBehaviour
         runtimeArrows.Clear();
         arrowsLocked = true;
     }
+
 }

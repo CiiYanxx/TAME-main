@@ -116,6 +116,7 @@ public class NPC : MonoBehaviour
                 active.isCompleted = true;
                 totalCompletedMissions++;
                 PlayerPrefs.SetInt("Mission_" + missionID, 1);
+
                 Debug.Log($"<color=green>[NPC GAMELOG]</color> Mission Success! Total: {totalCompletedMissions}");
 
                 if (missionFailCounts.ContainsKey(missionID))
@@ -129,15 +130,22 @@ public class NPC : MonoBehaviour
                     missionFailCounts[missionID] = 0;
 
                 missionFailCounts[missionID]++;
+
                 float baseCooldown = 60f;
                 float totalPenalty = baseCooldown * missionFailCounts[missionID];
+
                 missionCooldowns[missionID] = Time.time + totalPenalty;
 
                 Debug.Log($"<color=red>[NPC GAMELOG]</color> Mission Failed. Cooldown: {totalPenalty}s");
             }
 
             PlayerPrefs.SetInt("IsMissionActive", 0);
+
             SaveProgress();
+
+            // 🔥 AUTO REFRESH LOCATION LOCKS
+            if (DialogSystem.Instance != null)
+                DialogSystem.Instance.RefreshLocks();
 
             OnQuestStateChanged?.Invoke();
         }
