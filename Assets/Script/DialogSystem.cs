@@ -138,17 +138,42 @@ public class DialogSystem : MonoBehaviour
         if (previewAnimalImage && info.animalFullPreview != null)
             previewAnimalImage.sprite = info.animalFullPreview;
 
+        // =========================
+        // DETAILS TEXT COLORS
+        // =========================
         if (detailsText)
         {
             detailsText.text = info.animalDetails
+                .Replace("DESCRIPTION:", "<color=#40A6CE>DESCRIPTION:</color>")
                 .Replace("BREED:", "<color=#40A6CE>BREED:</color>")
                 .Replace("AGE:", "<color=#40A6CE>AGE:</color>")
-                .Replace("STATUS:", "<color=#40A6CE>STATUS:</color>")
-                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>");
+                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>")
+                .Replace("CONDITION:", "<color=#40A6CE>CONDITION:</color>")
+                .Replace("BEHAVIOR:", "<color=#40A6CE>BEHAVIOR:</color>")
+                .Replace("DIET:", "<color=#40A6CE>DIET:</color>");
         }
 
+        // =========================
+        // DESCRIPTION TEXT COLORS
+        // =========================
         if (descriptionText)
-            descriptionText.text = info.missionDescription;
+        {
+            string desc = info.missionDescription;
+
+            // kulay green lahat
+            desc = $"<color=#5EFF7A>{desc}</color>";
+
+            // pero ibang kulay ang HINT:
+            desc = desc.Replace(
+                "HINT:",
+                "</color><color=#000000>HINT:</color><color=#5EFF7A>"
+            );
+
+            // close final color tag
+            desc += "</color>";
+
+            descriptionText.text = desc;
+        }
 
         confirmPreviewBtn.onClick.RemoveAllListeners();
         confirmPreviewBtn.onClick.AddListener(() =>
@@ -195,41 +220,52 @@ public class DialogSystem : MonoBehaviour
 
         if (NPC.Instance == null)
         {
-            Debug.LogError("[DialogSystem] NPC is NULL");
+            Debug.LogError("NPC NULL");
             return;
         }
 
-        Debug.Log($"[DialogSystem] Loading animals for locationIndex = {locationIndex}");
+        if (animalRowPrefab == null)
+        {
+            Debug.LogError("animalRowPrefab NULL");
+            return;
+        }
 
-        bool foundAny = false;
+        if (animalListContainer == null)
+        {
+            Debug.LogError("animalListContainer NULL");
+            return;
+        }
 
         foreach (QuestInfo info in NPC.Instance.allQuests)
         {
-            Debug.Log($"Checking Quest: {info.targetAnimalName} | loc={info.locationIndex}");
+            if (info.locationIndex != locationIndex)
+                continue;
 
-            if (info.locationIndex != locationIndex) continue;
-
-            foundAny = true;
+            Debug.Log("Creating Row For: " + info.targetAnimalName);
 
             GameObject row = Instantiate(animalRowPrefab, animalListContainer);
-            spawnedRows.Add(row);
 
             QuestCard card = row.GetComponent<QuestCard>();
 
-            if (card != null)
+            if (card == null)
+            {
+                Debug.LogError("QuestCard missing on prefab");
+                continue;
+            }
+
+            try
+            {
                 card.Setup(info, NPC.Instance, true);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("QuestCard Setup Error on " + info.targetAnimalName);
+                Debug.LogError(e);
+            }
+
+            spawnedRows.Add(row);
         }
-
-        if (!foundAny)
-        {
-            Debug.LogWarning($"[DialogSystem] NO QUEST FOUND for location {locationIndex}");
-        }
-
-        LayoutRebuilder.ForceRebuildLayoutImmediate(
-            animalListContainer.GetComponent<RectTransform>()
-        );
-    }
-
+    }  
     public void ClearAnimalList()
     {
         foreach (var row in spawnedRows)

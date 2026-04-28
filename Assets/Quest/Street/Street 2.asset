@@ -13,17 +13,14 @@ MonoBehaviour:
   m_Name: Street 2
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog
-  animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
+  animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
   animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: "BREED: Askal\nAGE: Adult\nCOLOR: Black \nCONDITION: Weak & Hungry\nBEHAVIOR:
-    Lovely but shy\nDIET: Clean Water & Soft Food"
-  missionDescription: 'DESCRIPTION: This dog is abandon by thier owner.
-
-
-    HINT:
-    "West side of the Animal Center near the big rock"'
+  animalDetails: "DESCRIPTION: This dog is abandon by thier owner.\nBREED: Askal\nAGE:
+    Adult\nCOLOR: Black \nCONDITION: Weak & Hungry\nBEHAVIOR: Lovely but shy\nDIET:
+    Clean Water & Soft Food"
+  missionDescription: 'HINT: "West side of the Animal Center near the big rock"'
   missionHint: 'HINT: "West side of the Animal Center near the big rock"'
-  animalPrefab: {fileID: 0}
+  animalPrefab: {fileID: 8062036066302463845, guid: 3f58209a5ec6c804ca156f9962777845, type: 3}
   spawnPosition: {x: 115.3, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10

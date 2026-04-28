@@ -226,6 +226,11 @@ public class RescueController : MonoBehaviour
 
         currentAnimal = null;
         activeMissionLogic = null;
+
+        PlayerPrefs.SetInt("IsMissionActive", 0);
+        PlayerPrefs.DeleteKey("ActiveLocIdx");
+        PlayerPrefs.DeleteKey("ActiveMissIdx");
+        PlayerPrefs.Save();
     }
 
     public void AddGravity(GameObject obj)
@@ -281,7 +286,7 @@ public class RescueController : MonoBehaviour
 
             IEnumerator TriggerTutorial9Delay()
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(5f);
 
         if (TutorialController.Instance != null)
             TutorialController.Instance.Tutorial9_Rescue();

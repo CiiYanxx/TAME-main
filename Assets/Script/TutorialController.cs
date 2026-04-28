@@ -115,7 +115,7 @@ public class TutorialController : MonoBehaviour
 
     IEnumerator ShowStep(int index)
     {
-        yield return new WaitForSecondsRealtime(1f);
+        yield return new WaitForSecondsRealtime(0f);
 
         ShowPanel(index);
 
@@ -207,7 +207,7 @@ public class TutorialController : MonoBehaviour
 
     IEnumerator Tutorial2Delay()
     {
-        yield return new WaitForSecondsRealtime(1f);
+        yield return new WaitForSecondsRealtime(0.5f);
         Tutorial2_Interact();
     }
 
@@ -246,7 +246,7 @@ public class TutorialController : MonoBehaviour
 
     IEnumerator Tutorial5TrustDelay()
     {
-        yield return new WaitForSecondsRealtime(0.5f);
+        yield return new WaitForSecondsRealtime(0f);
         Show(5);
     }
 

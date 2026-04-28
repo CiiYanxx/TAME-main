@@ -70,6 +70,13 @@ public class NPC : MonoBehaviour
                     if (RescueController.Instance != null)
                         RescueController.Instance.StartMission(this, activeInfo);
                 }
+                else
+                {
+                    PlayerPrefs.SetInt("IsMissionActive", 0);
+                    PlayerPrefs.DeleteKey("ActiveLocIdx");
+                    PlayerPrefs.DeleteKey("ActiveMissIdx");
+                    PlayerPrefs.Save();
+                }
             }
         }
         else
@@ -140,6 +147,9 @@ public class NPC : MonoBehaviour
             }
 
             PlayerPrefs.SetInt("IsMissionActive", 0);
+            PlayerPrefs.DeleteKey("ActiveLocIdx");
+            PlayerPrefs.DeleteKey("ActiveMissIdx");
+            PlayerPrefs.Save();
 
             SaveProgress();
 
@@ -329,12 +339,11 @@ public class NPC : MonoBehaviour
         SaveProgress();
         Debug.Log("<color=white>[NPC GAMELOG]</color> Conversation ended.");
 
-        if (TutorialController.Instance != null)
-        {
-            TutorialController.Instance.OnConversationEnd();
-        }
+        Quest active = quests.Find(q => q.accepted && !q.isCompleted);
 
-        if (TutorialController.Instance != null)
+        if (TutorialController.Instance != null &&
+            totalCompletedMissions == 0 &&
+            active != null)
         {
             TutorialController.Instance.OnConversationEnd();
         }

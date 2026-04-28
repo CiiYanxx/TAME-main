@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: Park 1
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog 5
-  animalIcon: {fileID: 21300000, guid: f8e164c8c8286da49b3436b93b90173c, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 08db40237dab3b34c82891152b152eb8, type: 3}
-  animalDetails: "BREED: Siamese (Puspin)\nAGE: Kitten\nCOLOR: Orange & White \nCONDITION:
-    Weak & Hungry\nBEHAVIOR: Energetic but Frightened\nDIET: Clean Water & Soft Food"
-  missionDescription: "DESCRIPTION: This kitten fell into a narrow drainage pipe
-    and is covered in filth. \n\nHINT: \"East side of the Animal Center near the
-    tree\""
+  animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
+  animalDetails: "DESCRIPTION: This kitten fell into a narrow drainage pipe and is
+    covered in filth. \nBREED: Siamese (Puspin)\nAGE: Kitten\nCOLOR: Orange & White
+    \nCONDITION: Weak & Hungry\nBEHAVIOR: Energetic but Frightened\nDIET: Clean Water
+    & Soft Food"
+  missionDescription: 'HINT: "East side of the Animal Center near the tree"'
   missionHint: 'HINT: "East side of the Animal Center near the tree"'
-  animalPrefab: {fileID: 0}
+  animalPrefab: {fileID: 8062036066302463845, guid: 04582ba2d0cae6943aacc5af1f71caa9, type: 3}
   spawnPosition: {x: 207.91, y: 0, z: 138.83}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
@@ -29,7 +29,7 @@ MonoBehaviour:
   foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
   questTitle: Rescue a Stray Cat
   locationIndex: 1
-  missionIndex: 0
+  missionIndex: 3
   progressPointsReward: 1
   acceptAnswer: Good luck!
   requiredSuccesses: 5
