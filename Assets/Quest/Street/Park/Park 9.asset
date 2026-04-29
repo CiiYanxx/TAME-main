@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Park 9
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Dog 8
+  animalIcon: {fileID: 21300000, guid: 2bd513b8850c94b4d9f0dff73a0d27dc, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: c170168bfc138904d8d37485257d6fb4, type: 3}
+  animalDetails: 'DESCRIPTION: A lost park dog following people around for food.
+
+
+    BREED:
+    Aspin
+
+    AGE: Adult
+
+    COLOR: Black
+
+    CONDITION: Weak
+
+    BEHAVIOR: Friendly'
+  missionDescription: 'HINT: "Near the Pizza Shop"'
+  missionHint: 'HINT: "Near the Pizza Shop"'
+  animalPrefab: {fileID: 8062036066302463845, guid: 09cb7635d48b27942a9ed488c5dc848f, type: 3}
+  spawnPosition: {x: 136.6, y: 0, z: 343.01}
+  animalRotation: {x: 0, y: 90, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a Black dog
+  locationIndex: 1
+  missionIndex: 8
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 17
+  maxFailures: 8
+  pointerSpeed: 600

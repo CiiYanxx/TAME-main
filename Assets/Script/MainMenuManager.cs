@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.IO; 
+using System.IO;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -10,9 +10,9 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private GameObject optionsPanel;
 
     [Header("Play/Load Button Logic")]
-    [SerializeField] private Image playButtonImage; 
-    [SerializeField] private Sprite playSprite;      
-    [SerializeField] private Sprite loadGameSprite;  
+    [SerializeField] private Image playButtonImage;
+    [SerializeField] private Sprite playSprite;
+    [SerializeField] private Sprite loadGameSprite;
 
     [Header("Audio Settings")]
     [SerializeField] private Slider musicSlider;
@@ -20,8 +20,8 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Toggle muteToggle;
 
     [Header("Options & Reset")]
-    [SerializeField] private Button resetProgressButton; 
-    
+    [SerializeField] private Button resetProgressButton;
+
     [Header("Main Menu UI Objects (Hide/Show System)")]
     [SerializeField] private GameObject[] hideOnOptionsOpen;
     [SerializeField] private GameObject[] showOnOptionsClose;
@@ -59,7 +59,7 @@ public class MainMenuManager : MonoBehaviour
 
             if (sfxSlider != null)
             {
-                sfxSlider.value = AudioManager.Instance.sfxSource.volume;   
+                sfxSlider.value = AudioManager.Instance.sfxSource.volume;
 
                 sfxSlider.onValueChanged.RemoveAllListeners();
                 sfxSlider.onValueChanged.AddListener(AudioManager.Instance.SetSFXVolume);
@@ -72,24 +72,25 @@ public class MainMenuManager : MonoBehaviour
                 muteToggle.onValueChanged.RemoveAllListeners();
                 muteToggle.onValueChanged.AddListener(AudioManager.Instance.SetMuteAll);
             }
-
-            if (resetConfirmPanel != null)
-            resetConfirmPanel.SetActive(false);
-
-            if (yesResetButton != null)
-            {
-                yesResetButton.onClick.RemoveAllListeners();
-                yesResetButton.onClick.AddListener(ConfirmResetGame);
-            }
-
-            if (noResetButton != null)
-            {
-                noResetButton.onClick.RemoveAllListeners();
-                noResetButton.onClick.AddListener(CloseResetConfirm);
-            }
         }
 
-        UpdatePlayButtonState();
+        // RESET CONFIRM PANEL
+        if (resetConfirmPanel != null)
+            resetConfirmPanel.SetActive(false);
+
+        // YES BUTTON
+        if (yesResetButton != null)
+        {
+            yesResetButton.onClick.RemoveAllListeners();
+            yesResetButton.onClick.AddListener(ConfirmResetGame);
+        }
+
+        // NO BUTTON
+        if (noResetButton != null)
+        {
+            noResetButton.onClick.RemoveAllListeners();
+            noResetButton.onClick.AddListener(CloseResetConfirm);
+        }
 
         // RESET BUTTON
         if (resetProgressButton != null)
@@ -97,21 +98,25 @@ public class MainMenuManager : MonoBehaviour
             resetProgressButton.onClick.RemoveAllListeners();
             resetProgressButton.onClick.AddListener(ResetGameProgress);
         }
+
+        UpdatePlayButtonState();
     }
 
     private void UpdatePlayButtonState()
     {
         bool hasSave = File.Exists(Application.persistentDataPath + "/savedata.json");
-        
+
         if (playButtonImage != null)
         {
             playButtonImage.sprite = hasSave ? loadGameSprite : playSprite;
-            
+
             Button btn = playButtonImage.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();
-            
-            if (hasSave) btn.onClick.AddListener(ContinueGame);
-            else btn.onClick.AddListener(NewGame);
+
+            if (hasSave)
+                btn.onClick.AddListener(ContinueGame);
+            else
+                btn.onClick.AddListener(NewGame);
         }
     }
 
@@ -127,15 +132,18 @@ public class MainMenuManager : MonoBehaviour
     public void ContinueGame()
     {
         PlayerPrefs.SetString("TargetScene", mainGameScene);
-        SceneManager.LoadScene("3LoadingScreen"); 
+        SceneManager.LoadScene("3LoadingScreen");
     }
 
     public void OpenOptions()
     {
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (optionsPanel != null) optionsPanel.SetActive(true);
+        if (mainMenuPanel != null)
+            mainMenuPanel.SetActive(false);
 
-        // HIDE MULTIPLE OBJECTS
+        if (optionsPanel != null)
+            optionsPanel.SetActive(true);
+
+        // HIDE OBJECTS
         if (hideOnOptionsOpen != null)
         {
             foreach (GameObject obj in hideOnOptionsOpen)
@@ -148,10 +156,13 @@ public class MainMenuManager : MonoBehaviour
 
     public void CloseOptions()
     {
-        if (optionsPanel != null) optionsPanel.SetActive(false);
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
 
-        // SHOW MULTIPLE OBJECTS
+        if (mainMenuPanel != null)
+            mainMenuPanel.SetActive(true);
+
+        // SHOW OBJECTS
         if (showOnOptionsClose != null)
         {
             foreach (GameObject obj in showOnOptionsClose)
@@ -161,8 +172,12 @@ public class MainMenuManager : MonoBehaviour
             }
         }
     }
+
     public void ResetGameProgress()
     {
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+
         if (resetConfirmPanel != null)
             resetConfirmPanel.SetActive(true);
     }
@@ -177,8 +192,10 @@ public class MainMenuManager : MonoBehaviour
 
         Debug.Log("<color=red>Progress Reset!</color>");
 
+        if (resetConfirmPanel != null)
+            resetConfirmPanel.SetActive(false);
+
         UpdatePlayButtonState();
-        CloseResetConfirm();
         CloseOptions();
     }
 
@@ -186,11 +203,20 @@ public class MainMenuManager : MonoBehaviour
     {
         if (resetConfirmPanel != null)
             resetConfirmPanel.SetActive(false);
+
+        if (optionsPanel != null)
+            optionsPanel.SetActive(true);
     }
-    
+
+    private void OnEnable()
+    {
+        UpdatePlayButtonState();
+    }
+
     public void QuitGame()
     {
         Application.Quit();
+
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
         #endif

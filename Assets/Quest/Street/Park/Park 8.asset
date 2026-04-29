@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Park 8
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Cat 9
+  animalIcon: {fileID: 21300000, guid: fce05b09532e1a344936e36b23a4f6d6, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: b4573e040837f6447b2de78d7570e415, type: 3}
+  animalDetails: 'DESCRIPTION: A calm white cat resting quietly beside the blue slides.
+
+
+    BREED:
+    Puspin
+
+    AGE: Adult
+
+    COLOR: White
+
+    CONDITION: Healthy
+
+    BEHAVIOR:
+    Relaxed'
+  missionDescription: 'HINT: "Beside the blue slides"'
+  missionHint: 'HINT: "Beside the blue slides"'
+  animalPrefab: {fileID: 9042750889717099821, guid: 4a7739ee8d9eb3a4b8debe9f8a963314, type: 3}
+  spawnPosition: {x: 146.76, y: 0, z: 275.21}
+  animalRotation: {x: 0, y: 90, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a White cat
+  locationIndex: 1
+  missionIndex: 7
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 16
+  maxFailures: 8
+  pointerSpeed: 600

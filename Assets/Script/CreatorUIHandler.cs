@@ -23,35 +23,50 @@ public class CustomizationUI : MonoBehaviour
 
     [Header("Action Buttons")]
     [SerializeField] private Button saveBtn;
-    [SerializeField] private Button backBtn; 
-    
+    [SerializeField] private Button backBtn;
+
     [Header("Scene Names")]
     [SerializeField] private string nextSceneName = "GameScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
     private void Start()
     {
-        // Setup Next Buttons (Forward)
-        hairNextBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Hair, 1));
-        shirtNextBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shirt, 1));
-        shortsNextBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shorts, 1));
-        shoesNextBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shoes, 1));
+        // NEXT BUTTONS
+        hairNextBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Hair, 1));
 
-        // Setup Previous Buttons (Backward)
-        hairPrevBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Hair, -1));
-        shirtPrevBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shirt, -1));
-        shortsPrevBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shorts, -1));
-        shoesPrevBtn.onClick.AddListener(() => customizer.ChangePart(CharacterCustomizer.BodyPartType.Shoes, -1));
-        
-        // Setup Action Buttons
+        shirtNextBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shirt, 1));
+
+        shortsNextBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shorts, 1));
+
+        shoesNextBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shoes, 1));
+
+        // PREVIOUS BUTTONS
+        hairPrevBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Hair, -1));
+
+        shirtPrevBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shirt, -1));
+
+        shortsPrevBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shorts, -1));
+
+        shoesPrevBtn.onClick.AddListener(() =>
+            customizer.ChangePart(CharacterCustomizer.BodyPartType.Shoes, -1));
+
+        // SAVE BUTTON
         saveBtn.onClick.AddListener(HandleSaveAndNextScene);
-        
+
+        // BACK BUTTON
         if (backBtn != null)
             backBtn.onClick.AddListener(ReturnToMainMenu);
 
         customizer.LoadCharacter();
-        
-        if(PlayerPrefs.HasKey("CharacterName"))
+
+        if (PlayerPrefs.HasKey("CharacterName"))
             nameInputField.text = PlayerPrefs.GetString("CharacterName");
     }
 

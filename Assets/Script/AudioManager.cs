@@ -16,8 +16,8 @@ public class AudioManager : MonoBehaviour
     public AudioClip buttonClickClip;
 
     [Header("Default Volume")]
-    [Range(0f, 1f)] public float defaultMusicVolume = 0.75f;
-    [Range(0f, 1f)] public float defaultSFXVolume = 0.75f;
+    [Range(0f, 1f)] public float defaultMusicVolume = 0.5f;
+    [Range(0f, 1f)] public float defaultSFXVolume = 0.5f;
 
     private const string MUSIC_VOL = "MusicVolume";
     private const string SFX_VOL   = "SFXVolume";
@@ -25,17 +25,15 @@ public class AudioManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        // SAFE SINGLETON
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
 
         SetupSources();
         LoadSettings();
@@ -43,14 +41,12 @@ public class AudioManager : MonoBehaviour
 
     private void SetupSources()
     {
-        // MUSIC SOURCE
         if (musicSource == null)
             musicSource = gameObject.AddComponent<AudioSource>();
 
         musicSource.playOnAwake = false;
         musicSource.loop = true;
 
-        // SFX SOURCE
         if (sfxSource == null)
             sfxSource = gameObject.AddComponent<AudioSource>();
 
@@ -58,12 +54,11 @@ public class AudioManager : MonoBehaviour
         sfxSource.loop = false;
     }
 
-    // ==================================================
-    // MUSIC
-    // ==================================================
+    // ========================= MUSIC =========================
+
     public void PlayMusic(AudioClip clip)
     {
-        if (clip == null) return;
+        if (clip == null || musicSource == null) return;
 
         if (musicSource.clip == clip && musicSource.isPlaying)
             return;
@@ -74,7 +69,8 @@ public class AudioManager : MonoBehaviour
 
     public void StopMusic()
     {
-        musicSource.Stop();
+        if (musicSource != null)
+            musicSource.Stop();
     }
 
     public void PlayMainMenuMusic()
@@ -87,49 +83,50 @@ public class AudioManager : MonoBehaviour
         PlayMusic(gameplayMusic);
     }
 
+    // ========================= SFX =========================
+
     public void PlayButtonClick()
     {
+        if (Instance == null) return;
+        if (sfxSource == null) return;
         if (buttonClickClip == null) return;
+
         sfxSource.PlayOneShot(buttonClickClip);
     }
 
-    // ==================================================
-    // SFX
-    // ==================================================
     public void PlaySFX(AudioClip clip)
     {
-        if (clip == null) return;
+        if (clip == null || sfxSource == null) return;
 
         sfxSource.PlayOneShot(clip);
     }
 
-    // ==================================================
-    // VOLUME SETTINGS
-    // ==================================================
+    // ========================= VOLUME =========================
+
     public void SetMusicVolume(float value)
     {
+        if (musicSource == null) return;
+
         musicSource.volume = value;
         PlayerPrefs.SetFloat(MUSIC_VOL, value);
-        PlayerPrefs.Save();
     }
 
     public void SetSFXVolume(float value)
     {
+        if (sfxSource == null) return;
+
         sfxSource.volume = value;
         PlayerPrefs.SetFloat(SFX_VOL, value);
-        PlayerPrefs.Save();
     }
 
-    // ==================================================
-    // MUTE ALL (Music + SFX)
-    // ==================================================
+    // ========================= MUTE =========================
+
     public void SetMuteAll(bool muted)
     {
-        musicSource.mute = muted;
-        sfxSource.mute = muted;
+        if (musicSource != null) musicSource.mute = muted;
+        if (sfxSource != null) sfxSource.mute = muted;
 
         PlayerPrefs.SetInt(MUTE_ALL, muted ? 1 : 0);
-        PlayerPrefs.Save();
     }
 
     public bool IsMuted()
@@ -137,11 +134,12 @@ public class AudioManager : MonoBehaviour
         return PlayerPrefs.GetInt(MUTE_ALL, 0) == 1;
     }
 
-    // ==================================================
-    // LOAD SAVED SETTINGS
-    // ==================================================
+    // ========================= LOAD =========================
+
     public void LoadSettings()
     {
+        if (musicSource == null || sfxSource == null) return;
+
         float musicVol = PlayerPrefs.GetFloat(MUSIC_VOL, defaultMusicVolume);
         float sfxVol   = PlayerPrefs.GetFloat(SFX_VOL, defaultSFXVolume);
         bool muted     = PlayerPrefs.GetInt(MUTE_ALL, 0) == 1;

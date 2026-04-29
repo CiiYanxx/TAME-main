@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Park 1
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Cat 5
+  animalIcon: {fileID: 21300000, guid: c26bf2e0f7a9072489898aabfb138f12, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 37c33e1fa269f1b439e6adb78ffe24c4, type: 3}
+  animalDetails: 'DESCRIPTION: A stray cat walking through the park grass.
+
+
+    BREED:
+    Puspin
+
+    AGE: Adult
+
+    COLOR: Gray
+
+    CONDITION: Healthy
+
+    BEHAVIOR:
+    Careful'
+  missionDescription: 'HINT: "Southwest of the fountain"'
+  missionHint: 'HINT: "Southwest of the fountain"'
+  animalPrefab: {fileID: 9042750889717099821, guid: 5bf4ba00e70ab124c8d17103450e1dfa, type: 3}
+  spawnPosition: {x: 217.01, y: 0, z: 264.86}
+  animalRotation: {x: 0, y: 90, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a Gray Cat
+  locationIndex: 1
+  missionIndex: 0
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 10
+  maxFailures: 5
+  pointerSpeed: 500

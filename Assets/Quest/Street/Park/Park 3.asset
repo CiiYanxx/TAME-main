@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Park 3
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Cat 6
+  animalIcon: {fileID: 21300000, guid: c32c77a0339baea4a9d1447362ec3781, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 671a0fbe172017242b3a7f10094be1bb, type: 3}
+  animalDetails: 'DESCRIPTION: A quiet cat that roaming in the logs.
+
+
+    BREED:
+    Puspin
+
+    AGE: Young
+
+    COLOR: Orange
+
+    CONDITION: Dirty
+
+    BEHAVIOR:
+    Hides often'
+  missionDescription: 'HINT: "Southwest of the fountain near logs"'
+  missionHint: 'HINT: "Southwest of the fountain near logs"'
+  animalPrefab: {fileID: 9042750889717099821, guid: b8d2892d971de3a4a8df3e5bc94303dd, type: 3}
+  spawnPosition: {x: 212.04, y: 0, z: 275.19}
+  animalRotation: {x: 0, y: 90, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a Orange Cat
+  locationIndex: 1
+  missionIndex: 2
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 11
+  maxFailures: 5
+  pointerSpeed: 500
