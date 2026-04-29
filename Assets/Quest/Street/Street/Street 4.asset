@@ -13,36 +13,34 @@ MonoBehaviour:
   m_Name: Street 4
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog 1
-  animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: 'DESCRIPTION: A lost dog wandering around.
+  animalIcon: {fileID: 21300000, guid: b3cc846ab74aca04ebba70514dc2b9b8, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 6d506b122ab10cd48957fa15911fafe5, type: 3}
+  animalDetails: 'DESCRIPTION: A quiet dog searching for food.
 
-    BREED: Aspin
+
+    BREED: Puspin
 
     AGE:
-    Puppy
+    Adult
 
     COLOR: Gray & White
 
-    CONDITION: Hungry
+    CONDITION: Healthy
 
-    BEHAVIOR: Playful
-
-    DIET:
-    Bread and rice'
-  missionDescription: 'HINT: "West side of the Animal Center infront big rocks"'
-  missionHint: 'HINT: "West side of the Animal Center in front of blue house"'
+    BEHAVIOR: Alert'
+  missionDescription: 'HINT: "West of the Animal Center in front big rocks"'
+  missionHint: 'HINT: "West of the Animal Center in front big rocks"'
   animalPrefab: {fileID: 8062036066302463845, guid: 6c8ff0ee195284145b3f05331df496c9, type: 3}
   spawnPosition: {x: 103.31, y: 0, z: 128.39}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 0.2
   foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
-  questTitle: Rescue a Gray & White Dog
+  questTitle: Rescue a Gray & White dog
   locationIndex: 0
-  missionIndex: 3
+  missionIndex: 4
   progressPointsReward: 1
-  acceptAnswer: Fantastic! Find the animal and bring it back safely.
-  requiredSuccesses: 5
+  acceptAnswer: Good luck!
+  requiredSuccesses: 6
   maxFailures: 3
   pointerSpeed: 300

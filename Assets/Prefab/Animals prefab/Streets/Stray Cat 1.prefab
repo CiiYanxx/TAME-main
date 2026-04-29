@@ -701,7 +701,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9178982a51d22ed408a5632833f6e499, type: 2}
+  - {fileID: 2100000, guid: 80d553fa9ab170741a2fbe0dda1ed7d9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1620,7 +1620,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentStep: 0
-  wanderRadius: 10
+  wanderRadius: 5
   rotationSpeed: 5
   walkSpeed: 1
   stopDistance: 1

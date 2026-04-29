@@ -10,39 +10,37 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
-  m_Name: Street 3
+  m_Name: Park 2
   m_EditorClassIdentifier: 
-  targetAnimalName: Stray Cat 1
+  targetAnimalName: Stray Dog 5
   animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
   animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: 'DESCRIPTION: A hungry kitten hiding infront of big rocks
+  animalDetails: 'DESCRIPTION: A nervous park dog barking at people passing by.
 
     BREED:
-    Puspin
+    Aspin
 
-    AGE: Kitten
+    AGE: Adult
 
-    COLOR: Black
+    COLOR: Black and Brown
 
-    CONDITION: Weak
+    CONDITION: Thin
 
     BEHAVIOR:
-    Shy
-
-    DIET: Small fish'
-  missionDescription: 'HINT: "East side of the Animal Center infront of the big rock"'
-  missionHint: 'HINT: "East side of the Animal Center infront of the big rock"'
-  animalPrefab: {fileID: 9042750889717099821, guid: 2f8d297c18e6d18488132b758b92d37e, type: 3}
-  spawnPosition: {x: 246.36, y: 0, z: 126.94}
-  animalRotation: {x: 0, y: 0, z: 0}
+    Alert'
+  missionDescription: 'HINT: "East side of the Animal Center near the tree"'
+  missionHint: 'HINT: "East side of the Animal Center near the tree"'
+  animalPrefab: {fileID: 8062036066302463845, guid: 04582ba2d0cae6943aacc5af1f71caa9, type: 3}
+  spawnPosition: {x: 207.91, y: 0, z: 138.83}
+  animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 1
   foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
-  questTitle: Rescue a Black Cat
-  locationIndex: 0
-  missionIndex: 2
+  questTitle: Rescue a Stray Cat
+  locationIndex: 1
+  missionIndex: 3
   progressPointsReward: 1
   acceptAnswer: Good luck!
-  requiredSuccesses: 5
-  maxFailures: 3
-  pointerSpeed: 300
+  requiredSuccesses: 10
+  maxFailures: 5
+  pointerSpeed: 500

@@ -21,6 +21,10 @@ public class LoadingScreenManager : MonoBehaviour
 
     void Start()
     {
+        // 🔇 Stop menu/customization music pagpasok sa loading scene
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopMusic();
+
         if (loadingScreenUI != null)
             loadingScreenUI.SetActive(true);
 

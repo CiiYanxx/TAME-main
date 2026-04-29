@@ -106,6 +106,9 @@ public class PlayerMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         anim = GetComponent<Animator>();
         Application.targetFrameRate = 60;
+        
+        if (AudioManager.Instance != null)
+        AudioManager.Instance.PlayGameplayMusic();
 
         if (mainCanvas != null) mainCanvas.SetActive(false);
 

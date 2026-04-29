@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Street 5
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Cat 2
+  animalIcon: {fileID: 21300000, guid: da57dce4e00d7d341b842195f7a1d8b3, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: c36a3523ba3a7404a88c846b3bf28114, type: 3}
+  animalDetails: 'DESCRIPTION: A small stray cat seen behind the small tree.
+
+
+    BREED:
+    Puspin
+
+    AGE: Young
+
+    COLOR: Orange
+
+    CONDITION: Thin
+
+    BEHAVIOR:
+    Quiet'
+  missionDescription: 'HINT: "NorthEast of the Animal Center behind the small tree"'
+  missionHint: 'HINT: "NorthEast of the Animal Center behind the small tree"'
+  animalPrefab: {fileID: 9042750889717099821, guid: 539a70c7edfb62c478bfa6d8c318c09b, type: 3}
+  spawnPosition: {x: 255.03, y: 0, z: 191.65}
+  animalRotation: {x: 0, y: 0, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a Orange Cat
+  locationIndex: 0
+  missionIndex: 5
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 7
+  maxFailures: 3
+  pointerSpeed: 300

@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb4933e0542fe14eb914a2ff66e9031, type: 3}
+  m_Name: Street 7
+  m_EditorClassIdentifier: 
+  targetAnimalName: Stray Cat 3
+  animalIcon: {fileID: 21300000, guid: c90c6cbcc51b91541a1ee897e0945407, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 0c71552473e2b64449bce753bc1e6340, type: 3}
+  animalDetails: 'DESCRIPTION: A small white cat abandon by its owner.
+
+
+    BREED:
+    Puspin
+
+    AGE: Young
+
+    COLOR: White
+
+    CONDITION: Hungry
+
+    BEHAVIOR:
+    Curious'
+  missionDescription: 'HINT: "NorthEast of the Animal Center in between houses"'
+  missionHint: 'HINT: "NorthEast of the Animal Center in between houses"'
+  animalPrefab: {fileID: 9042750889717099821, guid: f1faaef3b9e380e428736bca11d46b1c, type: 3}
+  spawnPosition: {x: 236.08, y: 0, z: 197.34}
+  animalRotation: {x: 0, y: 0, z: 0}
+  detectionRadius: 10
+  drainSpeed: 1
+  foodBowlPrefab: {fileID: 5196025187111122989, guid: 17a45b260a0d2ff4fb61e30e7c54e7ef, type: 3}
+  questTitle: Rescue a White Cat
+  locationIndex: 0
+  missionIndex: 7
+  progressPointsReward: 1
+  acceptAnswer: Good luck!
+  requiredSuccesses: 9
+  maxFailures: 3
+  pointerSpeed: 300

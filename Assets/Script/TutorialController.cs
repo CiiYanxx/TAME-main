@@ -207,7 +207,7 @@ public class TutorialController : MonoBehaviour
 
     IEnumerator Tutorial2Delay()
     {
-        yield return new WaitForSecondsRealtime(.5f);
+        yield return new WaitForSecondsRealtime(0f);
         Tutorial2_Interact();
     }
 
@@ -404,16 +404,19 @@ public class TutorialController : MonoBehaviour
 
     public void OnConversationEnd()
     {
-        arrowsLocked = true;
+        Debug.Log("Conversation Ended");
 
+        arrowsLocked = true;
         HideArrowUI();
 
-        runtimeArrows.Clear();
-
-        // 🔥 ONLY continue tutorial if mission is actually active
-        if (PlayerPrefs.GetInt("IsMissionActive", 0) == 1)
+        if (NPC.Instance != null)
         {
+            Debug.Log("NPC Found = YES");
             Tutorial3_HintPanel();
+        }
+        else
+        {
+            Debug.Log("NPC Found = NO");
         }
     }
 

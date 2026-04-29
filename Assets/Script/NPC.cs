@@ -46,7 +46,7 @@ public class NPC : MonoBehaviour
         // 1. Load Player Name
         string savedName = PlayerPrefs.GetString("Character_Name", "");
         if (string.IsNullOrEmpty(savedName)) savedName = "Rescue Hero";
-        coloredPlayerName = $"<color=#00FFFF>{savedName}</color>";
+        coloredPlayerName = $"<color=#2B7B98>{savedName}</color>";
 
         // 2. Load Save Data and Log Status
         GameData data = SaveSystem.Load();
@@ -163,8 +163,8 @@ public class NPC : MonoBehaviour
 
     public void SaveProgress()
     {
-        string rawName = PlayerPrefs.GetString("Character_Name", "Rescue Hero")
-            .Replace("<color=#00FFFF>", "").Replace("</color>", "");
+        string rawName = PlayerPrefs.GetString("Character_Name", "Rescuer")
+            .Replace("<color=#2B7B98>", "").Replace("</color>", "");
 
         Vector3 pos = PlayerMovement.Instance != null ? PlayerMovement.Instance.transform.position : Vector3.zero;
         int points = RescuePointsHandler.Instance != null ? RescuePointsHandler.Instance.currentPoints : 0;

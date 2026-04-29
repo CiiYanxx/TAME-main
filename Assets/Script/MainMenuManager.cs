@@ -16,11 +16,20 @@ public class MainMenuManager : MonoBehaviour
 
     [Header("Audio Settings")]
     [SerializeField] private Slider musicSlider;
+    [SerializeField] private Slider sfxSlider;
     [SerializeField] private Toggle muteToggle;
-    [SerializeField] private AudioSource backgroundMusic; // I-drag dito ang AudioSource mo
 
     [Header("Options & Reset")]
     [SerializeField] private Button resetProgressButton; 
+    
+    [Header("Main Menu UI Objects (Hide/Show System)")]
+    [SerializeField] private GameObject[] hideOnOptionsOpen;
+    [SerializeField] private GameObject[] showOnOptionsClose;
+
+    [Header("Reset Confirmation Panel")]
+    [SerializeField] private GameObject resetConfirmPanel;
+    [SerializeField] private Button yesResetButton;
+    [SerializeField] private Button noResetButton;
 
     [Header("Scene Names")]
     [SerializeField] private string characterCustomizeScene = "Customize Character";
@@ -28,16 +37,61 @@ public class MainMenuManager : MonoBehaviour
 
     private void Start()
     {
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
-        if (optionsPanel != null) optionsPanel.SetActive(false);
-        
+        if (mainMenuPanel != null)
+            mainMenuPanel.SetActive(true);
+
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+
+        // PLAY MAIN MENU MUSIC
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayMainMenuMusic();
+
+            // LOAD CURRENT SETTINGS
+            if (musicSlider != null)
+            {
+                musicSlider.value = AudioManager.Instance.musicSource.volume;
+
+                musicSlider.onValueChanged.RemoveAllListeners();
+                musicSlider.onValueChanged.AddListener(AudioManager.Instance.SetMusicVolume);
+            }
+
+            if (sfxSlider != null)
+            {
+                sfxSlider.value = AudioManager.Instance.sfxSource.volume;   
+
+                sfxSlider.onValueChanged.RemoveAllListeners();
+                sfxSlider.onValueChanged.AddListener(AudioManager.Instance.SetSFXVolume);
+            }
+
+            if (muteToggle != null)
+            {
+                muteToggle.isOn = AudioManager.Instance.IsMuted();
+
+                muteToggle.onValueChanged.RemoveAllListeners();
+                muteToggle.onValueChanged.AddListener(AudioManager.Instance.SetMuteAll);
+            }
+
+            if (resetConfirmPanel != null)
+            resetConfirmPanel.SetActive(false);
+
+            if (yesResetButton != null)
+            {
+                yesResetButton.onClick.RemoveAllListeners();
+                yesResetButton.onClick.AddListener(ConfirmResetGame);
+            }
+
+            if (noResetButton != null)
+            {
+                noResetButton.onClick.RemoveAllListeners();
+                noResetButton.onClick.AddListener(CloseResetConfirm);
+            }
+        }
+
         UpdatePlayButtonState();
-        LoadAudioSettings(); // I-load ang volume settings
 
-        // Setup Audio Listeners
-        if (musicSlider != null) musicSlider.onValueChanged.AddListener(SetVolume);
-        if (muteToggle != null) muteToggle.onValueChanged.AddListener(SetMute);
-
+        // RESET BUTTON
         if (resetProgressButton != null)
         {
             resetProgressButton.onClick.RemoveAllListeners();
@@ -61,51 +115,13 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-    // --- AUDIO LOGIC ---
-    public void SetVolume(float volume)
-    {
-        if (backgroundMusic != null)
-        {
-            backgroundMusic.volume = volume;
-            PlayerPrefs.SetFloat("MusicVolume", volume);
-        }
-    }
-
-    public void SetMute(bool isMuted)
-    {
-        if (backgroundMusic != null)
-        {
-            backgroundMusic.mute = isMuted;
-            PlayerPrefs.SetInt("MusicMuted", isMuted ? 1 : 0);
-        }
-    }
-
-    private void LoadAudioSettings()
-    {
-        float savedVolume = PlayerPrefs.GetFloat("MusicVolume", 0.75f);
-        bool savedMute = PlayerPrefs.GetInt("MusicMuted", 0) == 1;
-
-        if (musicSlider != null) musicSlider.value = savedVolume;
-        if (muteToggle != null) muteToggle.isOn = savedMute;
-
-        if (backgroundMusic != null)
-        {
-            backgroundMusic.volume = savedVolume;
-            backgroundMusic.mute = savedMute;
-        }
-    }
-
-    // --- NAVIGATION ---
     public void NewGame()
     {
         if (File.Exists(Application.persistentDataPath + "/savedata.json"))
             File.Delete(Application.persistentDataPath + "/savedata.json");
 
-        PlayerPrefs.DeleteAll(); 
-        PlayerPrefs.Save();
-        
         PlayerPrefs.SetString("TargetScene", characterCustomizeScene);
-        SceneManager.LoadScene("Customize Character"); 
+        SceneManager.LoadScene("Customize Character");
     }
 
     public void ContinueGame()
@@ -118,27 +134,60 @@ public class MainMenuManager : MonoBehaviour
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         if (optionsPanel != null) optionsPanel.SetActive(true);
+
+        // HIDE MULTIPLE OBJECTS
+        if (hideOnOptionsOpen != null)
+        {
+            foreach (GameObject obj in hideOnOptionsOpen)
+            {
+                if (obj != null)
+                    obj.SetActive(false);
+            }
+        }
     }
 
     public void CloseOptions()
     {
         if (optionsPanel != null) optionsPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+
+        // SHOW MULTIPLE OBJECTS
+        if (showOnOptionsClose != null)
+        {
+            foreach (GameObject obj in showOnOptionsClose)
+            {
+                if (obj != null)
+                    obj.SetActive(true);
+            }
+        }
+    }
+    public void ResetGameProgress()
+    {
+        if (resetConfirmPanel != null)
+            resetConfirmPanel.SetActive(true);
     }
 
-    public void ResetGameProgress()
+    public void ConfirmResetGame()
     {
         if (File.Exists(Application.persistentDataPath + "/savedata.json"))
             File.Delete(Application.persistentDataPath + "/savedata.json");
 
-        PlayerPrefs.DeleteAll(); 
+        PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
-        
+
         Debug.Log("<color=red>Progress Reset!</color>");
+
         UpdatePlayButtonState();
+        CloseResetConfirm();
         CloseOptions();
     }
 
+    public void CloseResetConfirm()
+    {
+        if (resetConfirmPanel != null)
+            resetConfirmPanel.SetActive(false);
+    }
+    
     public void QuitGame()
     {
         Application.Quit();

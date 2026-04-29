@@ -311,7 +311,7 @@ public class RescueController : MonoBehaviour
 
             IEnumerator TriggerTutorial9Delay()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(4f);
 
         if (TutorialController.Instance != null)
             TutorialController.Instance.Tutorial9_Rescue();

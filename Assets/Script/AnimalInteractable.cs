@@ -231,10 +231,15 @@ public class AnimalInteractable : MonoBehaviour
 
         HideCircle();
 
+        AnimalMissionLogic logic = GetComponent<AnimalMissionLogic>();
+
         if (!success)
         {
             if (angryEmotePrefab != null)
                 SwitchEmote(angryEmotePrefab);
+
+            if (logic != null)
+                logic.CleanupFoodBowl();
 
             RescueController.Instance.UpdateNoiseMeter(false, Color.white, 0f);
             RescueController.Instance.ReportMissionOutcome(false);
@@ -243,8 +248,8 @@ public class AnimalInteractable : MonoBehaviour
         }
         else
         {
-            if (activeFoodBowl != null)
-                Destroy(activeFoodBowl);
+            if (logic != null)
+                logic.CleanupFoodBowl();
 
             if (activeEmote != null)
                 Destroy(activeEmote);

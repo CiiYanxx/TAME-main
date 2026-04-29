@@ -144,13 +144,13 @@ public class DialogSystem : MonoBehaviour
         if (detailsText)
         {
             detailsText.text = info.animalDetails
-                .Replace("DESCRIPTION:", "<color=#40A6CE>DESCRIPTION:</color>")
-                .Replace("BREED:", "<color=#40A6CE>BREED:</color>")
-                .Replace("AGE:", "<color=#40A6CE>AGE:</color>")
-                .Replace("COLOR:", "<color=#40A6CE>COLOR:</color>")
-                .Replace("CONDITION:", "<color=#40A6CE>CONDITION:</color>")
-                .Replace("BEHAVIOR:", "<color=#40A6CE>BEHAVIOR:</color>")
-                .Replace("DIET:", "<color=#40A6CE>DIET:</color>");
+                .Replace("DESCRIPTION:", "<b><color=#0074A2>DESCRIPTION:</color></b>")
+                .Replace("BREED:", "<b><color=#0074A2>BREED:</color></b>")
+                .Replace("AGE:", "<b><color=#0074A2>AGE:</color></b>")
+                .Replace("COLOR:", "<b><color=#0074A2>COLOR:</color></b>")
+                .Replace("CONDITION:", "<b><color=#0074A2>CONDITION:</color></b>")
+                .Replace("BEHAVIOR:", "<b><color=#0074A2>BEHAVIOR:</color></b>")
+                .Replace("DIET:", "<b><color=#0074A2>DIET:</color></b>");
         }
 
         // =========================
@@ -161,7 +161,7 @@ public class DialogSystem : MonoBehaviour
             string desc = info.missionDescription;
 
             // kulay green lahat
-            desc = $"<color=#000000>>{desc}</color>";
+            desc = $"<color=#000000>{desc}</color>";
 
             // pero ibang kulay ang HINT:
             desc = desc.Replace(

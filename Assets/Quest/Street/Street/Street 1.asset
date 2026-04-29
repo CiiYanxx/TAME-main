@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Street 1
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat
-  animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: 'DESCRIPTION: A small stray cat seen near the roadside stores.
+  animalIcon: {fileID: 21300000, guid: 35d45ae7e16da11469669c3132125174, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 9791298e90e859344ac6544da3b63efd, type: 3}
+  animalDetails: 'DESCRIPTION: A small stray cat seen in front of the red house.
+
 
     BREED:
     Puspin
@@ -27,11 +28,9 @@ MonoBehaviour:
     CONDITION: Thin
 
     BEHAVIOR:
-    Quiet
-
-    DIET: Fish scraps'
-  missionDescription: 'HINT: "East side of the Animal Center infront of the red house"'
-  missionHint: 'HINT: "East side of the Animal Center infront of the red house"'
+    Quiet'
+  missionDescription: 'HINT: "East of the Animal Center in front of the red house"'
+  missionHint: 'HINT: "East of the Animal Center in front of the red house"'
   animalPrefab: {fileID: 9042750889717099821, guid: 30a011b1725133343ac2eb5012fe4cf2, type: 3}
   spawnPosition: {x: 227.8775, y: 0, z: 154.7159}
   animalRotation: {x: 0, y: 90, z: 0}

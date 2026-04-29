@@ -15,10 +15,19 @@ MonoBehaviour:
   targetAnimalName: Stray Dog 5
   animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
   animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: "DESCRIPTION: This kitten fell into a narrow drainage pipe and is
-    covered in filth. \nBREED: Siamese (Puspin)\nAGE: Kitten\nCOLOR: Orange & White
-    \nCONDITION: Weak & Hungry\nBEHAVIOR: Energetic but Frightened\nDIET: Clean Water
-    & Soft Food"
+  animalDetails: 'DESCRIPTION: A nervous park dog barking at people passing by.
+
+    BREED:
+    Aspin
+
+    AGE: Adult
+
+    COLOR: Black and Brown
+
+    CONDITION: Thin
+
+    BEHAVIOR:
+    Alert'
   missionDescription: 'HINT: "East side of the Animal Center near the tree"'
   missionHint: 'HINT: "East side of the Animal Center near the tree"'
   animalPrefab: {fileID: 8062036066302463845, guid: 04582ba2d0cae6943aacc5af1f71caa9, type: 3}
@@ -32,6 +41,6 @@ MonoBehaviour:
   missionIndex: 3
   progressPointsReward: 1
   acceptAnswer: Good luck!
-  requiredSuccesses: 5
-  maxFailures: 3
-  pointerSpeed: 300
+  requiredSuccesses: 10
+  maxFailures: 5
+  pointerSpeed: 500

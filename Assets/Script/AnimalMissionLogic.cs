@@ -218,9 +218,6 @@ public class AnimalMissionLogic : MonoBehaviour
                 if (RescueController.Instance != null)
                     RescueController.Instance.OnFullTrustReached();
 
-                if (TutorialController.Instance != null)
-                    TutorialController.Instance.Tutorial6_Feed();
-
                 StartCoroutine(TransitionToFeedingSequence());
             }
         }
@@ -298,14 +295,22 @@ public class AnimalMissionLogic : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         if (RescueController.Instance.sneakButton != null)
+        {
             Debug.Log("<color=red>[SNEAK DEBUG]</color> SNEAK BUTTON OFF");
             RescueController.Instance.sneakButton.SetActive(false);
+        }
 
         if (RescueController.Instance.feedButton != null)
-        RescueController.Instance.feedButton.gameObject.SetActive(true);
+            RescueController.Instance.feedButton.gameObject.SetActive(true);
 
         if (PlayerMovement.Instance != null)
-        PlayerMovement.Instance.canControl = true;
+            PlayerMovement.Instance.canControl = true;
+
+        // 🔥 Delay bago tutorial popup para mauna button
+        yield return new WaitForSeconds(0.6f);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.Tutorial6_Feed();
     }
 
     public void OnFeedButtonPressed()
@@ -351,12 +356,9 @@ public class AnimalMissionLogic : MonoBehaviour
 
         animalMover.SetInput(Vector2.zero, transform.position, false, false);
 
-        yield return new WaitForSeconds(2.5f);
-
-        CleanupFoodBowl();
-
         currentStep = MissionStep.FinishedEating;
 
+        // 🔥 tanggal delay, instant tame prompt
         if (PointerController.Instance != null)
             PointerController.Instance.ShowTamePrompt(animalInteract);
     }
@@ -382,7 +384,7 @@ public class AnimalMissionLogic : MonoBehaviour
         animalMover.SetInput(Vector2.zero, transform.position, false, false);
     }
 
-    private void CleanupFoodBowl()
+    public void CleanupFoodBowl()
     {
         if (spawnedFoodBowl != null)
         {

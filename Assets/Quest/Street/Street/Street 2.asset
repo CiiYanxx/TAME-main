@@ -13,15 +13,14 @@ MonoBehaviour:
   m_Name: Street 2
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog
-  animalIcon: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 5991750bf16261b4d8efae714ad56a62, type: 3}
-  animalDetails: "DESCRIPTION: This dog is abandon by thier owner.\nBREED: Askal\nAGE:
-    Adult\nCOLOR: Orange & White \nCONDITION: Hungry\nBEHAVIOR: Lovely but shy\nDIET:
-    Clean Water & Soft Food"
-  missionDescription: 'HINT: "West side of the Animal Center infront of blue house"'
-  missionHint: 'HINT: "West side of the Animal Center in front of blue house"'
+  animalIcon: {fileID: 21300000, guid: ee6951be81e67964aa6914683600cec4, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 653689deebd085e40b1a32bca9de9cb0, type: 3}
+  animalDetails: "DESCRIPTION: This dog is abandon by thier owner.\n\nBREED: Askal\nAGE:
+    Adult\nCOLOR: Orange & White \nCONDITION: Hungry\nBEHAVIOR: Lovely but shy"
+  missionDescription: 'HINT: "West of the Animal Center in front of blue house"'
+  missionHint: 'HINT: "West of the Animal Center in front of blue house"'
   animalPrefab: {fileID: 8062036066302463845, guid: 3f58209a5ec6c804ca156f9962777845, type: 3}
-  spawnPosition: {x: 115.3, y: 0, z: 138.83}
+  spawnPosition: {x: 121.5, y: 0, z: 155.1}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 0.2
@@ -30,7 +29,7 @@ MonoBehaviour:
   locationIndex: 0
   missionIndex: 1
   progressPointsReward: 1
-  acceptAnswer: Fantastic! Find the animal and bring it back safely.
+  acceptAnswer: Good luck!
   requiredSuccesses: 5
   maxFailures: 3
   pointerSpeed: 300
