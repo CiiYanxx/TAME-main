@@ -93,6 +93,43 @@ public class PauseController : MonoBehaviour
     public void GoToMainMenu()
     {
         Time.timeScale = 1f;
+
+        PlayerMovement player = FindFirstObjectByType<PlayerMovement>();
+        CharacterCustomizer customizer = FindFirstObjectByType<CharacterCustomizer>();
+
+        if (player != null && customizer != null)
+        {
+            GameData currentData = SaveSystem.Load();
+
+            int missions = currentData != null ? currentData.completedMissions : 0;
+            int points = currentData != null ? currentData.playerPoints : 0;
+
+            string appearance = "";
+
+            foreach (var part in customizer.GetCustomizationParts())
+            {
+                appearance += $"{part.partType}:{part.currentIndex}|";
+            }
+
+            SaveSystem.Save(
+                missions,
+                points,
+                player.transform.position,
+                currentData != null ? currentData.charName : "Rescue Hero",
+                appearance
+            );
+        }
+
         SceneManager.LoadScene("01_MainMenu");
+    }
+
+    private void ToggleVisuals(bool show)
+    {
+        Renderer[] rends = GetComponentsInChildren<Renderer>(true);
+
+        foreach (Renderer r in rends)
+        {
+            r.enabled = show;
+        }
     }
 }

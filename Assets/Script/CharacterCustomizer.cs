@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 
 public class CharacterCustomizer : MonoBehaviour
@@ -35,9 +36,8 @@ public class CharacterCustomizer : MonoBehaviour
 
     private void Awake()
     {
-        LoadCharacter(); 
+        LoadCharacterImmediate();
     }
-
     // NAG-ADD NG INT DIRECTION PARAMETER DITO
     public void ChangePart(BodyPartType type, int direction = 1)
     {
@@ -93,7 +93,10 @@ public class CharacterCustomizer : MonoBehaviour
     {
         // 1. I-process ang Appearance Data
         string appearanceString = "";
-        foreach (var part in customizationParts) appearanceString += part.currentIndex + ",";
+        foreach (var part in customizationParts)
+        {
+            appearanceString += $"{part.partType}:{part.currentIndex}|";
+        }
         
         // 2. I-process ang Pangalan
         string rawName = (nameInputField != null && !string.IsNullOrEmpty(nameInputField.text)) 
@@ -135,22 +138,104 @@ public class CharacterCustomizer : MonoBehaviour
     public void LoadCharacter()
     {
         GameData data = SaveSystem.Load();
+
         if (data == null || string.IsNullOrEmpty(data.customizationData))
         {
-            foreach (var part in customizationParts) { part.currentIndex = 0; ApplyVisuals(part); }
+            foreach (var part in customizationParts)
+            {
+                part.currentIndex = 0;
+                ApplyVisuals(part);
+            }
+
             return;
         }
 
-        string[] savedIndices = data.customizationData.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < customizationParts.Count; i++)
+        string[] entries = data.customizationData.Split('|');
+
+        foreach (string entry in entries)
         {
-            if (i < savedIndices.Length && int.TryParse(savedIndices[i], out int index))
+            if (string.IsNullOrEmpty(entry))
+                continue;
+
+            string[] pair = entry.Split(':');
+
+            if (pair.Length != 2)
+                continue;
+
+            if (Enum.TryParse(pair[0], out BodyPartType type) &&
+                int.TryParse(pair[1], out int index))
             {
-                customizationParts[i].currentIndex = index;
-                ApplyVisuals(customizationParts[i]);
+                CustomizationData part = customizationParts.Find(x => x.partType == type);
+
+                if (part != null)
+                {
+                    part.currentIndex = index;
+                    ApplyVisuals(part);
+                }
             }
         }
-        
+
+        if (nameInputField != null)
+        {
+            nameInputField.text = data.charName;
+        }
+    }
+
+    private void ToggleVisuals(bool show)
+    {
+        Renderer[] rends = GetComponentsInChildren<Renderer>(true);
+
+        foreach (Renderer r in rends)
+        {
+            r.enabled = show;
+        }
+    }
+
+    private void LoadCharacterImmediate()
+    {
+        GameData data = SaveSystem.Load();
+
+        if (data == null || string.IsNullOrEmpty(data.customizationData))
+        {
+            foreach (var part in customizationParts)
+            {
+                part.currentIndex = 0;
+                ApplyVisuals(part);
+            }
+
+            return;
+        }
+
+        string[] entries = data.customizationData.Split('|');
+
+        foreach (string entry in entries)
+        {
+            if (string.IsNullOrEmpty(entry))
+                continue;
+
+            string[] pair = entry.Split(':');
+
+            if (pair.Length != 2)
+                continue;
+
+            if (Enum.TryParse(pair[0], out BodyPartType type) &&
+                int.TryParse(pair[1], out int index))
+            {
+                CustomizationData part = customizationParts.Find(x => x.partType == type);
+
+                if (part != null)
+                {
+                    part.currentIndex = index;
+                }
+            }
+        }
+
+        // APPLY EVERYTHING AFTER ALL INDICES ARE SET
+        foreach (var part in customizationParts)
+        {
+            ApplyVisuals(part);
+        }
+
         if (nameInputField != null)
         {
             nameInputField.text = data.charName;

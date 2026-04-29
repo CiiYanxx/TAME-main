@@ -11,33 +11,35 @@ public class DialogSystem : MonoBehaviour
     [Header("1st Step: Main Dialog")]
     public GameObject dialogPanel;
     public TextMeshProUGUI dialogText;
-    public Button option1BTN; 
-    public Button option2BTN; 
+    public Button option1BTN;
+    public Button option2BTN;
 
     [Header("Typing Effect")]
     public float typingSpeed = 0.02f;
-    private string fullText;
+
     private Coroutine typingCoroutine;
+    private bool isTyping = false;
+    private bool skipTyping = false;
 
     [Header("2nd Step: Mission Preview Panel")]
     public GameObject previewPanel;
     public Image previewAnimalImage;
-    public TextMeshProUGUI detailsText;   
-    public TextMeshProUGUI descriptionText; 
+    public TextMeshProUGUI detailsText;
+    public TextMeshProUGUI descriptionText;
     public Button confirmPreviewBtn;
 
     [Header("3rd Step: Location Selection")]
     public GameObject locationSelectionPanel;
-    public Button[] locationCards; 
-    public GameObject[] locationLocks; 
+    public Button[] locationCards;
+    public GameObject[] locationLocks;
 
     [Header("4th Step: Animal Selection")]
     public GameObject animalSelectionPanel;
-    public GameObject animalRowPrefab; 
-    public Transform animalListContainer; 
+    public GameObject animalRowPrefab;
+    public Transform animalListContainer;
 
     [Header("Exit Logic")]
-    public Button backToNPCBTN; 
+    public Button backToNPCBTN;
 
     [Header("Panels")]
     public GameObject locationPanel;
@@ -105,6 +107,21 @@ public class DialogSystem : MonoBehaviour
             });
         }
     }
+
+    // ==========================================
+    // NEXT BUTTON LOGIC
+    // ==========================================
+    public void OnNextButton()
+    {
+        if (isTyping)
+        {
+            skipTyping = true;
+            return;
+        }
+
+        // NPC controls flow already
+    }
+
     // ==========================================
     void HideTutorialArrow()
     {
@@ -113,7 +130,7 @@ public class DialogSystem : MonoBehaviour
             TutorialController.Instance.HideArrowUI();
         }
 
-        lastArrowIndex = -1; // 🔥 RESET FIX
+        lastArrowIndex = -1;
     }
 
     // ==========================================
@@ -160,16 +177,13 @@ public class DialogSystem : MonoBehaviour
         {
             string desc = info.missionDescription;
 
-            // kulay green lahat
             desc = $"<color=#000000>{desc}</color>";
 
-            // pero ibang kulay ang HINT:
             desc = desc.Replace(
                 "HINT:",
                 "</color><color=#000000>HINT:</color><color=#000000>"
             );
 
-            // close final color tag
             desc += "</color>";
 
             descriptionText.text = desc;
@@ -190,7 +204,7 @@ public class DialogSystem : MonoBehaviour
         CloseAllPanels();
         HideTutorialArrow();
 
-        UpdateLocationLocks(); // ADD THIS
+        UpdateLocationLocks();
 
         locationSelectionPanel.SetActive(true);
         locationPanel.SetActive(true);
@@ -203,7 +217,6 @@ public class DialogSystem : MonoBehaviour
     {
         CloseAllPanels();
 
-        // 🔥 ADD THIS (kills arrow before UI changes)
         if (TutorialController.Instance != null)
             TutorialController.Instance.HideArrowUI();
 
@@ -214,6 +227,7 @@ public class DialogSystem : MonoBehaviour
         TriggerArrow(2);
     }
 
+    // ==========================================
     void SpawnAnimalList(int locationIndex)
     {
         ClearAnimalList();
@@ -265,12 +279,15 @@ public class DialogSystem : MonoBehaviour
 
             spawnedRows.Add(row);
         }
-    }  
+    }
+
+    // ==========================================
     public void ClearAnimalList()
     {
         foreach (var row in spawnedRows)
         {
-            if (row != null) Destroy(row);
+            if (row != null)
+                Destroy(row);
         }
 
         spawnedRows.Clear();
@@ -293,24 +310,25 @@ public class DialogSystem : MonoBehaviour
         HideTutorialArrow();
     }
 
+    // ==========================================
     void TriggerArrow(int index)
     {
         if (TutorialController.Instance == null) return;
         if (NPC.Instance != null && NPC.Instance.totalCompletedMissions > 0) return;
 
-        if (lastArrowIndex == index) return; // 🔥 PREVENT DUPLICATE
+        if (lastArrowIndex == index) return;
 
         lastArrowIndex = index;
 
         TutorialController.Instance.ShowArrowOnIndex(index);
     }
 
+    // ==========================================
     void UpdateLocationLocks()
     {
-
         int completed = 0;
 
-         if (NPC.Instance != null)
+        if (NPC.Instance != null)
             completed = NPC.Instance.totalCompletedMissions;
 
         for (int i = 0; i < locationCards.Length; i++)
@@ -318,26 +336,27 @@ public class DialogSystem : MonoBehaviour
             bool locked = false;
 
             if (i < requiredMissionsPerLocation.Length)
-                    locked = completed < requiredMissionsPerLocation[i];
+                locked = completed < requiredMissionsPerLocation[i];
 
             if (locationCards[i] != null)
-                    locationCards[i].interactable = !locked;
+                locationCards[i].interactable = !locked;
 
             if (locationLocks != null &&
-                 i < locationLocks.Length &&
-                 locationLocks[i] != null)
-             {
+                i < locationLocks.Length &&
+                locationLocks[i] != null)
+            {
                 locationLocks[i].SetActive(locked);
             }
         }
     }
-    
 
+    // ==========================================
     public void RefreshLocks()
     {
         UpdateLocationLocks();
     }
 
+    // ==========================================
     public void SetDialogText(string text)
     {
         if (typingCoroutine != null)
@@ -346,14 +365,25 @@ public class DialogSystem : MonoBehaviour
         typingCoroutine = StartCoroutine(TypeText(text));
     }
 
+    // ==========================================
     IEnumerator TypeText(string text)
     {
+        isTyping = true;
+        skipTyping = false;
+
         dialogText.text = "";
 
         bool isInsideTag = false;
 
         foreach (char c in text)
         {
+            // 🔥 skip typing instantly
+            if (skipTyping)
+            {
+                dialogText.text = text;
+                break;
+            }
+
             if (c == '<')
                 isInsideTag = true;
 
@@ -365,5 +395,8 @@ public class DialogSystem : MonoBehaviour
             if (c == '>')
                 isInsideTag = false;
         }
+
+        isTyping = false;
+        skipTyping = false;
     }
 }
