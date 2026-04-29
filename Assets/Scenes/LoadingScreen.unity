@@ -881,8 +881,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   loadingScreenUI: {fileID: 1355936540}
-  progressBar: {fileID: 0}
-  progressText: {fileID: 0}
+  progressBar: {fileID: 1191682808}
+  progressText: {fileID: 148610591}
   sceneToLoadIndex: 1
   loadSpeed: 0.5
   waitBeforeExit: 1.5
