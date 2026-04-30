@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Park 8
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat 9
-  animalIcon: {fileID: 21300000, guid: fce05b09532e1a344936e36b23a4f6d6, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: b4573e040837f6447b2de78d7570e415, type: 3}
+  animalIcon: {fileID: 21300000, guid: dd34cf08133b0fa45acab1c4b216a30c, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 7e8cab6ef03b8324a97f2eb255b9a114, type: 3}
   animalDetails: 'DESCRIPTION: A calm white cat resting quietly beside the blue slides.
 
 

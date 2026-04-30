@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Park 5
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Dog 7
-  animalIcon: {fileID: 21300000, guid: c53fb005e1cc4334db3d6fdcb27ee70c, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: cc443c314c49f0744b67d0fbfdf92b12, type: 3}
+  animalIcon: {fileID: 21300000, guid: 79d553d346907bc43a83a0e473c097cc, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 181a5b64d89786a40afd538c8635c251, type: 3}
   animalDetails: 'DESCRIPTION: A barking stray dog guarding its resting spot in the
     park.
 
@@ -32,7 +32,7 @@ MonoBehaviour:
   missionDescription: 'HINT: "Near the Coffee Shop"'
   missionHint: 'HINT: "Near the Coffee Shop"'
   animalPrefab: {fileID: 8062036066302463845, guid: c2c98329c7440e74b8c1066b44279f5c, type: 3}
-  spawnPosition: {x: 207.91, y: 0, z: 138.83}
+  spawnPosition: {x: 215.46, y: 0, z: 341.87}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 1

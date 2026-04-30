@@ -31,7 +31,7 @@ MonoBehaviour:
   missionDescription: 'HINT: "East of fountain"'
   missionHint: 'HINT: "East of fountain"'
   animalPrefab: {fileID: 8062036066302463845, guid: 3f58209a5ec6c804ca156f9962777845, type: 3}
-  spawnPosition: {x: 207.91, y: 0, z: 138.83}
+  spawnPosition: {x: 225.92, y: 0, z: 290.4}
   animalRotation: {x: 0, y: 90, z: 0}
   detectionRadius: 10
   drainSpeed: 1

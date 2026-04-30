@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Park 3
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat 6
-  animalIcon: {fileID: 21300000, guid: c32c77a0339baea4a9d1447362ec3781, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 671a0fbe172017242b3a7f10094be1bb, type: 3}
+  animalIcon: {fileID: 21300000, guid: 05f7cd7746893d0448922cfc91cebe14, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 5abd9be7dcbc7fe43acece74bf45692f, type: 3}
   animalDetails: 'DESCRIPTION: A quiet cat that roaming in the logs.
 
 

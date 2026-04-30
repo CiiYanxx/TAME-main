@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Park 6
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat 7
-  animalIcon: {fileID: 21300000, guid: 7e01fd679b956e94b931d326bc89860e, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: 46aa4e26576a799449e051945a88b4aa, type: 3}
+  animalIcon: {fileID: 21300000, guid: 85ffebd4fbd4b00418c54d1f67308236, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 21240294c40f83d4b9bd1299aa622ab6, type: 3}
   animalDetails: 'DESCRIPTION: A wet park cat meowing softly in front of red slides.
+
 
     BREED:
     Puspin

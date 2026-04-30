@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Park 7
   m_EditorClassIdentifier: 
   targetAnimalName: Stray Cat 8
-  animalIcon: {fileID: 21300000, guid: f289b6a3a52d1e74f83d9379af4b3746, type: 3}
-  animalFullPreview: {fileID: 21300000, guid: f72843e252b9513458f91a6ee0d5200f, type: 3}
+  animalIcon: {fileID: 21300000, guid: 922501676a899374b9845fc7ec2088c4, type: 3}
+  animalFullPreview: {fileID: 21300000, guid: 0aab994f0c7b67446a881fcc440c1f23, type: 3}
   animalDetails: 'DESCRIPTION: A black stray cat wandering near the fountain.
 
 

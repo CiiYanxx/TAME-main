@@ -123,13 +123,5 @@ public class PauseController : MonoBehaviour
         SceneManager.LoadScene("01_MainMenu");
     }
 
-    private void ToggleVisuals(bool show)
-    {
-        Renderer[] rends = GetComponentsInChildren<Renderer>(true);
-
-        foreach (Renderer r in rends)
-        {
-            r.enabled = show;
-        }
-    }
+    
 }
