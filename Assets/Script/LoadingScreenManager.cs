@@ -12,7 +12,7 @@ public class LoadingScreenManager : MonoBehaviour
     public TMP_Text progressText;
 
     [Header("Settings")]
-    public int sceneToLoadIndex = 1;
+    public int sceneToLoadIndex = 2;
     [Range(0.1f, 1f)]
     public float loadSpeed = 0.3f;    // Gaano kabilis mapuno ang bar
     public float waitBeforeExit = .5f; // Ilang segundo maghihintay pagkatapos ng 100%

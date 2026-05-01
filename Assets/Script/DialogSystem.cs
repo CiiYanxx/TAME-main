@@ -15,11 +15,18 @@ public class DialogSystem : MonoBehaviour
     public Button option2BTN;
 
     [Header("Typing Effect")]
-    public float typingSpeed = 0.02f;
+    public float typingSpeed = 0f;
+
+    public bool waitingForChoice = false;
 
     private Coroutine typingCoroutine;
     private bool isTyping = false;
     private bool skipTyping = false;
+
+    [Header("Typing Toggle")]
+    public bool enableTypewriter = true;
+
+    public Button[] optionButtons;
 
     [Header("2nd Step: Mission Preview Panel")]
     public GameObject previewPanel;
@@ -63,9 +70,16 @@ public class DialogSystem : MonoBehaviour
         CloseAllPanels();
         UpdateLocationLocks();
 
+        foreach (Button btn in optionButtons)
+        {
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(OnNextButton);
+        }
+
         for (int i = 0; i < locationCards.Length; i++)
         {
             int index = i;
+
 
             if (locationCards[i] != null)
             {
@@ -96,6 +110,7 @@ public class DialogSystem : MonoBehaviour
             }
         }
 
+
         if (backToNPCBTN != null)
         {
             backToNPCBTN.onClick.AddListener(() =>
@@ -119,7 +134,9 @@ public class DialogSystem : MonoBehaviour
             return;
         }
 
-        // NPC controls flow already
+        // ❌ BLOCK automatic progression unless NPC allows it
+        if (!waitingForChoice)
+            return;
     }
 
     // ==========================================
@@ -308,6 +325,9 @@ public class DialogSystem : MonoBehaviour
         locationPanel.SetActive(false);
 
         HideTutorialArrow();
+
+        // 🔥 RESET STATE
+        waitingForChoice = false;
     }
 
     // ==========================================
@@ -377,24 +397,23 @@ public class DialogSystem : MonoBehaviour
 
         foreach (char c in text)
         {
-            // 🔥 skip typing instantly
             if (skipTyping)
             {
                 dialogText.text = text;
                 break;
             }
 
-            if (c == '<')
-                isInsideTag = true;
+            if (c == '<') isInsideTag = true;
 
             dialogText.text += c;
 
-            if (!isInsideTag)
+            if (!isInsideTag && enableTypewriter)
                 yield return new WaitForSeconds(typingSpeed);
 
-            if (c == '>')
-                isInsideTag = false;
+            if (c == '>') isInsideTag = false;
         }
+
+        dialogText.text = text;
 
         isTyping = false;
         skipTyping = false;

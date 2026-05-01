@@ -283,6 +283,14 @@ public class TutorialController : MonoBehaviour
             Show(9);
     }
 
+    public void Tutorial10_RescueFail()
+    {
+        if (stepTriggered[10]) return;
+
+        stepTriggered[10] = true;
+        Show(10);
+    }
+
     public void ShowArrowOnIndex(int index)
     {
         if (arrowsLocked) return;

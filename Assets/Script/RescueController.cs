@@ -168,7 +168,10 @@ public class RescueController : MonoBehaviour
         RestorePlayerControls();
 
         if (!success)
+        {
             ShowFailDialog();
+            StartCoroutine(TriggerTutorial10Delay());
+        }   
 
         StartCoroutine(CleanupAfterDelay());
     }
@@ -309,12 +312,20 @@ public class RescueController : MonoBehaviour
         }
     }
 
-            IEnumerator TriggerTutorial9Delay()
+    IEnumerator TriggerTutorial9Delay()
     {
         yield return new WaitForSeconds(4f);
 
         if (TutorialController.Instance != null)
             TutorialController.Instance.Tutorial9_Rescue();
+    }
+
+    IEnumerator TriggerTutorial10Delay()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (TutorialController.Instance != null)
+            TutorialController.Instance.Tutorial10_RescueFail();
     }
     
 }

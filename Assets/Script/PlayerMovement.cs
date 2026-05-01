@@ -191,7 +191,7 @@ public class PlayerMovement : MonoBehaviour
         canControl = false;
 
         StartCoroutine(MoveBusSequence());
-        StartCoroutine(ShowWelcomeImage());
+        
         StartCoroutine(DelayedPlayerShow());
 
         foreach (Transform wp in introWaypoints)
@@ -487,6 +487,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (mainCameraObj != null)
             mainCameraObj.SetActive(false);
+            StartCoroutine(ShowWelcomeImage());
 
         foreach (IntroCameraShot shot in introCameraShots)
         {

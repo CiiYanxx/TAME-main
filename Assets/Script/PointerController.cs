@@ -1,6 +1,8 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+
 
 public class PointerController : MonoBehaviour
 {
@@ -24,6 +26,11 @@ public class PointerController : MonoBehaviour
     public GameObject playerJoystick; 
     public GameObject playerInteractButton; 
     public Button tameButton; 
+
+    [Header("Outcome Typing")]
+    public float outcomeTypingSpeed = 0.02f;
+
+    private Coroutine outcomeTypingCoroutine;
 
     // MGA VARIABLES NA GALING NA SA QUEST INFO (Hindi na hardcoded dito)
     private float moveSpeed; 
@@ -228,8 +235,8 @@ public class PointerController : MonoBehaviour
 
     private void ShowOutcomeSecondDialog() 
     { 
-        if (lastResultWasSuccess) outcomeText.text = "Go back to Dr. Kevin so he can assess the rescued animal and check their condition";
-        else outcomeText.text = "Go back to Dr. Kevin to restart the rescue mission";
+        if (lastResultWasSuccess) outcomeText.text = "Go back to <color=#2B7B98>Dr. Kevin</color> so he can assess the rescued animal and check their condition";
+        else outcomeText.text = "Go back to <color=#2B7B98>Dr. Kevin</color> to restart the rescue mission";
 
         outcomeContinueBtn.onClick.RemoveAllListeners();
         outcomeContinueBtn.onClick.AddListener(CloseOutcomePanel);
@@ -251,5 +258,34 @@ public class PointerController : MonoBehaviour
     private void ResetPointerAndAdvance() { 
         pointerTransform.localPosition = new Vector3(0f, pointerTransform.localPosition.y, 0f); 
         RandomizeSafeZonePosition(); 
+    }
+
+    private IEnumerator TypeOutcomeText(string text)
+    {
+        outcomeText.text = "";
+
+        bool isInsideTag = false;
+
+        foreach (char c in text)
+        {
+            if (c == '<') isInsideTag = true;
+
+            outcomeText.text += c;
+
+            if (!isInsideTag)
+                yield return new WaitForSeconds(outcomeTypingSpeed);
+
+            if (c == '>') isInsideTag = false;
+        }
+
+        outcomeText.text = text;
+    }
+
+    private void StartOutcomeTyping(string text)
+    {
+        if (outcomeTypingCoroutine != null)
+            StopCoroutine(outcomeTypingCoroutine);
+
+        outcomeTypingCoroutine = StartCoroutine(TypeOutcomeText(text));
     }
 }

@@ -320,10 +320,17 @@ public class NPC : MonoBehaviour
 
     private void SetupOption1(string text, UnityEngine.Events.UnityAction action)
     {
-        DialogSystem.Instance.option1BTN.GetComponentInChildren<TextMeshProUGUI>().text = text;
-        DialogSystem.Instance.option1BTN.onClick.RemoveAllListeners();
-        DialogSystem.Instance.option1BTN.onClick.AddListener(action);
+        var btn = DialogSystem.Instance.option1BTN;
+
+        btn.GetComponentInChildren<TextMeshProUGUI>().text = text;
+
+        btn.onClick.RemoveAllListeners();
+        btn.onClick.AddListener(action);
+
         DialogSystem.Instance.option2BTN.gameObject.SetActive(false);
+
+        // 🔥 IMPORTANT: allow choice mode ONLY here
+        DialogSystem.Instance.waitingForChoice = true;
     }
 
     public void EndConversation()

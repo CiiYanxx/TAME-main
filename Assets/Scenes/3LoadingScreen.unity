@@ -812,7 +812,7 @@ MonoBehaviour:
   loadingScreenUI: {fileID: 1355936540}
   progressBar: {fileID: 176562585}
   progressText: {fileID: 680059609}
-  sceneToLoadIndex: 4
+  sceneToLoadIndex: 5
   loadSpeed: 0.5
   waitBeforeExit: 0.5
 --- !u!1 &1468261239
