@@ -287,8 +287,20 @@ public class TutorialController : MonoBehaviour
     {
         if (stepTriggered[10]) return;
 
+        StartCoroutine(Tutorial10DelayRoutine());
+    }
+
+    IEnumerator Tutorial10DelayRoutine()
+    {
+        yield return new WaitForSecondsRealtime(3f); // 👉 delay mo dito
+
+        readyForNextStep = true;
+
+        if (stepTriggered[10]) yield break;
+
         stepTriggered[10] = true;
-        Show(10);
+
+        yield return StartCoroutine(ShowStep(10));
     }
 
     public void ShowArrowOnIndex(int index)
